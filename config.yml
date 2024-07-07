@@ -16,7 +16,7 @@
 #  7       Solid Blue
 #  8       Red Rum
 ###
-debug: True
+debug: False
 path_to_audio_files: ./audio/chatter
 flight_deck_latitude: 32.7178  # Latitude for 1625 Grove St, San Diego, CA 92102
 flight_deck_longitude: -117.1275  # Longitude for 1625 Grove St, San Diego, CA 92102
@@ -124,7 +124,6 @@ audio_effects:
      effect_duration: .2
    - wled_command: '{"ps": 2, "transition": 0}'
      effect_duration: 0
-
   11_v_for_victory.mp3:
    - wled_command: '{"ps": 2}'
      effect_duration: 0

@@ -1,0 +1,133 @@
+###
+# Flight Deck Configuration File
+#
+# You can add your own audio files and your own WLED effects and then reference them below 
+# If effect_duration = 0, the effect will play for the duration of the associated MP3
+#
+# Pre-Built WLED Effects are As Follow:
+# 
+# ID   |   EFFECT DESCRIPTION
+#  1       Candles
+#  2       Landing Strip Lights
+#  3       Breathing Lights (Blue)
+#  4       Alien Glitching
+#  5       Alien Landing
+#  6       Stormy Weather
+#  7       Solid Blue
+#  8       Red Rum
+###
+debug: True
+path_to_audio_files: ./audio/chatter
+flight_deck_latitude: 32.7178  # Latitude for 1625 Grove St, San Diego, CA 92102
+flight_deck_longitude: -117.1275  # Longitude for 1625 Grove St, San Diego, CA 92102
+my_monitoring_radius_miles: 6  # 6 miles radius around the specified location
+aircraft_landing_track: 285 # This is pretty close to SAN DIEGO Landing heading
+my_aircraft_trigger_radius: 2.5  # Trigger radius in miles
+min_altitude_feet: 500  # Minimum altitude of 500 feet above ground
+max_altitude_feet: 1500  # Maximum altitude of 1500 feet above ground (adjust as needed)
+min_speed_knots: 100 # Minimum speed of 75 knots
+max_speed_knots: 200  # Maximum speed of 290 knots
+polling_interval: 3 # check for aircraft at this interval in seconds (dont recommend less than 3)
+idle_effects:
+    - wled_command: '{"ps": 1}'
+      effect_duration: 0
+audio_effects:
+  1-suspicious.mp3:
+    - wled_command: '{"ps": 2}'
+      effect_duration: 0 
+  2-emergency.mp3:
+    - wled_command: '{"ps": 2}'
+      effect_duration: 0
+  3_rum_for_vics.mp3:
+    - wled_command: '{"ps": 2}'
+      effect_duration: 0
+  4-valley-girl.mp3:
+    - wled_command: '{"ps": 2}'
+      effect_duration: 0
+  5-tikicrew.mp3:
+    - wled_command: '{"ps": 2}'
+      effect_duration: 0
+  6_junglebird.mp3:
+    - wled_command: '{"ps": 2}'
+      effect_duration: 0
+  7_unknown_object_hovering.mp3:
+    - wled_command: '{"ps": 2}'
+      effect_duration: 0
+  8-snake_on_plane.mp3:
+    - wled_command: '{"ps": 2}'
+      effect_duration: 0
+  9_ufo.mp3:
+    - wled_command: '{"ps": 2}'
+      effect_duration: 12
+    - wled_command: '{"ps": 9}'
+      effect_duration: 12
+    - wled_command: '{"ps": 2}'
+      effect_duration: 10
+    - wled_command: '{"ps": 9}'
+      effect_duration: 19
+    - wled_command: '{"ps": 2}'
+      effect_duration: 10
+    - wled_command: '{"ps": 9}'
+      effect_duration: 18
+    - wled_command: '{"ps": 2}'
+      effect_duration: 0
+  10_freaky_space_cadet.mp3:
+   - wled_command: '{"ps": 2}'
+     effect_duration: 12
+   - wled_command: '{"ps": 9}'
+     effect_duration: 11.8
+   - wled_command: '{"ps": 2}'
+     effect_duration: 9.5 
+   - wled_command: '{"ps": 9}'
+     effect_duration: 13.5 
+   - wled_command: '{"ps": 2}'
+     effect_duration: 9
+   - wled_command: '{"ps": 4, "transition": 0}'
+     effect_duration: .5
+   - wled_command: '{"ps": 5, "transition": 0}'
+     effect_duration: .25
+   - wled_command: '{"ps": 3, "transition": 0}'
+     effect_duration: .5
+   - wled_command: '{"ps": 6, "transition": 0}'
+     effect_duration: .2
+   - wled_command: '{"ps": 9, "transition": 0}'
+     effect_duration: .2
+   - wled_command: '{"ps": 4, "transition": 0}'
+     effect_duration: .3
+   - wled_command: '{"ps": 8, "transition": 0}'
+     effect_duration: .25
+   - wled_command: '{"ps": 4, "transition": 0}'
+     effect_duration: .3
+   - wled_command: '{"ps": 6, "transition": 0}'
+     effect_duration: .2
+   - wled_command: '{"ps": 9, "transition": 0}'
+     effect_duration: .2
+   - wled_command: '{"ps": 4, "transition": 0}'
+     effect_duration: .1
+   - wled_command: '{"ps": 5, "transition": 0}'
+     effect_duration: .25
+   - wled_command: '{"ps": 3, "transition": 0}'
+     effect_duration: .2
+   - wled_command: '{"ps": 6, "transition": 0}'
+     effect_duration: .2
+   - wled_command: '{"ps": 3, "transition": 0}'
+     effect_duration: .5
+   - wled_command: '{"ps": 4, "transition": 0}'
+     effect_duration: .1
+   - wled_command: '{"ps": 8, "transition": 0}'
+     effect_duration: .25
+   - wled_command: '{"ps": 4, "transition": 0}'
+     effect_duration: .3
+   - wled_command: '{"ps": 6, "transition": 0}'
+     effect_duration: .4
+   - wled_command: '{"ps": 9, "transition": 0}'
+     effect_duration: .2
+   - wled_command: '{"ps": 2, "transition": 0}'
+     effect_duration: 0
+
+  11_v_for_victory.mp3:
+   - wled_command: '{"ps": 2}'
+     effect_duration: 0
+  12-resigned-indy.mp3:
+   - wled_command: '{"ps": 2}'
+     effect_duration: 0

@@ -163,12 +163,19 @@ def is_west_of_flight_deck(current_longitude, flight_deck_longitude):
 
 # Function determines if flight is traveling West AND descending
 def is_west_and_descending(current_longitude, flight_deck_longitude):
-    return is_west_of_flight_deck_longitude(longitude, flight_deck_longitude) and is_descending(current_altitude, previous_altitude)
+    return is_west_of_flight_deck(longitude, flight_deck_longitude) and is_descending(current_altitude, previous_altitude)
 
 # Function determines if flight is traveling East AND ascending
 def is_east_and_ascending(current_longitude, flight_deck_longitude):
-    return is_east_of_flight_deck_longitude(longitude, flight_deck_longitude) and is_ascending(current_altitude, previous_altitude)
+    return is_east_of_flight_deck(longitude, flight_deck_longitude) and is_ascending(current_altitude, previous_altitude)
 
+# Function to determine if flight is landing from the East
+def is_landing_from_east(current_longitude, flight_deck_longitude):
+    return is_east_of_flight_deck(longitude, flight_deck_longitude) and is_descending(current_altitude, previous_altitude)
+
+# Function to determine if flight is taking off from the West
+def is_taking_off_from_west(current_longitude, flight_deck_longitude):
+    return is_west_of_flight_deck(longitude, flight_deck_longitude) and is_ascending(current_altitude, previous_altitude)
 
 def monitor_aircraft_with_descent_and_destination(latitude, longitude, monitoring_radius_miles, my_aircraft_trigger_radius, min_altitude_feet, max_altitude_feet, min_speed_knots, max_speed_knots):
     # Send Idle effects

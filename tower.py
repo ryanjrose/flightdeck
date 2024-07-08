@@ -1,5 +1,4 @@
 import curses
-import pprint
 import requests
 import time
 import pygame
@@ -37,7 +36,7 @@ class Tower:
 
         return nearby_aircraft
 
-    # Return True is invalid aircraft data
+    # Return True if valid aircraft data
     def valid_aircraft(self, aircraft):
         if aircraft.altitude == 99999:
             return False
@@ -46,6 +45,12 @@ class Tower:
         elif aircraft.longitude == 0:
             return False
         elif aircraft.callsign == "Unknown":
+            return False
+        elif aircraft.track == 0:
+            return False
+        elif aircraft.speed == 0:
+            return False
+        elif not aircraft.is_in_monitoring_radius():
             return False
         else:
             return True
@@ -70,8 +75,7 @@ class Tower:
                 time.sleep(0.1)
                 continue
 
-            # Filter out instances where calculate_closest_distance returns None
-            nearby_aircraft = [ac for ac in nearby_aircraft if ac.calculate_closest_distance(self.config['flight_deck_latitude'], self.config['flight_deck_longitude']) != 999]
+            #valid_nearby_aircraft = [ac for ac in nearby_aircraft if self.valid_aircraft(ac)]
 
             stdscr.clear()
             height, width = stdscr.getmaxyx()
@@ -96,6 +100,12 @@ class Tower:
             for idx, aircraft in enumerate(nearby_aircraft, start=3):
                 if idx >= height - 1:
                     break
+
+                # Add debugging information
+                #if not self.valid_aircraft(aircraft):
+                #    stdscr.addstr(idx, 0, f"INVALID: {aircraft.callsign} Lat: {aircraft.latitude}, Lon: {aircraft.longitude}")
+                #    continue
+
                 stdscr.addstr(idx, 0, f"{aircraft.callsign:<11}")
                 stdscr.addstr(idx, 12, f"{aircraft.category:^10}")
                 stdscr.addstr(idx, 23, f"{aircraft.id:^10}")
@@ -105,8 +115,8 @@ class Tower:
                 stdscr.addstr(idx, 63, f"{aircraft.latitude:.2f}".center(5))
                 stdscr.addstr(idx, 72, f"{aircraft.longitude:.2f}")
                 stdscr.addstr(idx, 81, f"{aircraft.distance_from_center_miles:.1f} mi".center(13))
-                stdscr.addstr(idx, 94, f"{self.checked_box if aircraft.is_landing_from_east() else self.unchecked_box}".center(10))
-                stdscr.addstr(idx, 105, f"{self.checked_box if aircraft.is_taking_off_from_west() else self.unchecked_box}".center(11))
+                stdscr.addstr(idx, 94, f"{self.checked_box if aircraft.is_landing_from_east else self.unchecked_box}".center(10))
+                stdscr.addstr(idx, 105, f"{self.checked_box if aircraft.is_taking_off_from_west else self.unchecked_box}".center(11))
 
             stdscr.refresh()
             time.sleep(0.1)
@@ -116,15 +126,15 @@ class Tower:
 
                 total_action_time = closest_aircraft.calculate_closest_distance(self.config['flight_deck_latitude'], self.config['flight_deck_longitude']) * 60
 
-                if closest_aircraft.is_within_trigger_radius() and closest_aircraft.is_speed_within_range() and closest_aircraft.is_altitude_within_range():
+                if closest_aircraft.is_in_trigger_radius() and closest_aircraft.is_speed_within_range() and closest_aircraft.is_altitude_within_range():
                     if mp3_files:
                         closest_aircraft.radio.play_mp3_file(stdscr, mp3_files[0], total_action_time)
                     else:
                         stdscr.addstr(1, 0, "No MP3 files to play.", curses.color_pair(1))
                         stdscr.refresh()
-                        #time.sleep(10)
+                        time.sleep(1)
                 else:
-                    #stdscr.addstr(1, 0, "No valid aircraft to play MP3 for.", curses.color_pair(1))
+                    stdscr.addstr(1, 0, "No valid aircraft to play MP3 for.", curses.color_pair(1))
                     stdscr.refresh()
 
             if stdscr.getch() == ord('q'):

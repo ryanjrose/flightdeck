@@ -1,4 +1,5 @@
 import glob
+import curses
 import serial
 import os
 import time

@@ -5,7 +5,6 @@ import time
 import pygame
 import yaml
 from aircraft import Aircraft
-from radio import Radio
 
 class Tower:
     def __init__(self, config_file='config.yml'):
@@ -30,18 +29,30 @@ class Tower:
 
         nearby_aircraft = []
         for aircraft_data in aircraft_list:
-            if aircraft_data.get("flight", "Unknown") != "Unknown":
-                aircraft = Aircraft(self.config, aircraft_data)
-                aircraft.distance_from_center_miles = aircraft.calculate_distance(self.config['flight_deck_latitude'], self.config['flight_deck_longitude'])
-                aircraft.update_state(self.unique_aircraft)
+            aircraft = Aircraft(self.config, aircraft_data)
+            aircraft.distance_from_center_miles = aircraft.calculate_distance(self.config['flight_deck_latitude'], self.config['flight_deck_longitude'])
+            aircraft.update_state(self.unique_aircraft)
+            if self.valid_aircraft(aircraft):
                 nearby_aircraft.append(aircraft)
 
         return nearby_aircraft
 
+    # Return True is invalid aircraft data
+    def valid_aircraft(self, aircraft):
+        if aircraft.altitude == 99999:
+            return False
+        elif aircraft.latitude == 0:
+            return False
+        elif aircraft.longitude == 0:
+            return False
+        elif aircraft.callsign == "Unknown":
+            return False
+        else:
+            return True
+
     def monitor_aircraft_with_descent_and_destination(self, stdscr):
         pygame.mixer.pre_init(frequency=44100, size=-16, channels=2, buffer=8192)
         pygame.mixer.init()
-        radio = Radio()
         mp3_files = Aircraft.get_shuffled_mp3_list(self.config)
         spinner_index = 0
 
@@ -94,8 +105,8 @@ class Tower:
                 stdscr.addstr(idx, 63, f"{aircraft.latitude:.2f}".center(5))
                 stdscr.addstr(idx, 72, f"{aircraft.longitude:.2f}")
                 stdscr.addstr(idx, 81, f"{aircraft.distance_from_center_miles:.1f} mi".center(13))
-                stdscr.addstr(idx, 94, f"{self.checked_box if aircraft.is_landing else self.unchecked_box}".center(10))
-                stdscr.addstr(idx, 105, f"{self.checked_box if aircraft.is_takeoff else self.unchecked_box}".center(11))
+                stdscr.addstr(idx, 94, f"{self.checked_box if aircraft.is_landing_from_east() else self.unchecked_box}".center(10))
+                stdscr.addstr(idx, 105, f"{self.checked_box if aircraft.is_taking_off_from_west() else self.unchecked_box}".center(11))
 
             stdscr.refresh()
             time.sleep(0.1)
@@ -107,13 +118,13 @@ class Tower:
 
                 if closest_aircraft.is_within_trigger_radius() and closest_aircraft.is_speed_within_range() and closest_aircraft.is_altitude_within_range():
                     if mp3_files:
-                        radio.play_mp3_file(self.config, stdscr, mp3_files[0], total_action_time, radio)
+                        closest_aircraft.radio.play_mp3_file(stdscr, mp3_files[0], total_action_time)
                     else:
                         stdscr.addstr(1, 0, "No MP3 files to play.", curses.color_pair(1))
                         stdscr.refresh()
-                        time.sleep(10)
+                        #time.sleep(10)
                 else:
-                    stdscr.addstr(1, 0, "No valid aircraft to play MP3 for.", curses.color_pair(1))
+                    #stdscr.addstr(1, 0, "No valid aircraft to play MP3 for.", curses.color_pair(1))
                     stdscr.refresh()
 
             if stdscr.getch() == ord('q'):

@@ -1,6 +1,7 @@
 import os
 import random
 from math import radians, acos, cos, sin, asin, sqrt, atan2, degrees
+from radio import Radio
 
 class Aircraft:
     def __init__(self, config, data):
@@ -17,6 +18,7 @@ class Aircraft:
         self.previous_altitude = 0
         self.is_landing = False
         self.is_takeoff = False
+        self.radio = Radio(config)  # Each aircraft has its own Radio instance
 
     def update_state(self, unique_aircraft):
         if self.id in unique_aircraft:
@@ -68,16 +70,35 @@ class Aircraft:
 
         return along_track_distance
 
+    # Plane is on a runway heading, either East or West
     def is_on_heading(self):
         landing_heading = self.config['aircraft_landing_runway'] * 10
         takeoff_heading = self.config['aircraft_takeoff_runway'] * 10
-        return abs(self.track - landing_heading) < 10 or abs(self.track - takeoff_heading) < 10
+        return abs(self.track - landing_heading) <= self.config['allowed_heading_deviation'] or abs(self.track - takeoff_heading) <= self.config['allowed_heading_deviation']
+
+    # function to find if aircraft is on a heading to the runway heading west
+    def is_on_west_heading(self):
+        landing_heading = self.config['aircraft_landing_runway'] * 10
+        return abs(self.track - landing_heading) < self.config['allowed_heading_deviation']
+    # function to find if aircraft is on a heading to the runway heading west
+
+    # function to find if aircraft is currently west of flight deck
+    def is_west_of_flight_deck(self):
+        return self.latitude and self.latitude >= self.config['flight_deck_latitude']
+
+    # function to find if aircraft is currently east of flight deck
+    def is_east_of_flight_deck(self):
+        return self.latitude and self.latitude <= self.config['flight_deck_latitude']
+
+    def is_on_east_heading(self):
+        takeoff_heading = self.config['aircraft_takeoff_runway'] * 10
+        return abs(self.track - takeoff_heading) < self.config['allowed_heading_deviation']
 
     def is_speed_within_range(self):
         return self.speed and self.config['min_speed_knots'] <= self.speed <= self.config['max_speed_knots']
 
     def is_altitude_within_range(self):
-        return self.altitude and self.altitude <= self.config['max_altitude_feet']
+        return self.altitude and self.altitude <= self.config['max_altitude_feet'] and self.altitude >= self.config['min_altitude_feet']    
 
     def is_within_trigger_radius(self):
         return self.distance_from_center_miles and self.distance_from_center_miles <= self.config['aircraft_trigger_radius']
@@ -85,11 +106,16 @@ class Aircraft:
     def is_ascending(self):
         return self.altitude and self.previous_altitude and self.altitude > self.previous_altitude
 
+    def is_descending(self):
+        return self.altitude and self.previous_altitude and self.altitude < self.previous_altitude
+
+    # plane is east of flight deck, is on a west heading to runway and is descending
+    # function determines if aircraft is currently East of Flight Deck and descending and is westbound on heading to runway
     def is_landing_from_east(self):
-        return self.is_on_heading() and self.is_ascending()
+        return self.is_east_of_flight_deck() and self.is_on_west_heading() and self.is_descending()
 
     def is_taking_off_from_west(self):
-        return self.is_on_heading() and not self.is_ascending()
+        return self.is_west_of_flight_deck() and self.is_on_west_heading() and self.is_ascending()
 
     @staticmethod
     def get_shuffled_mp3_list(config):

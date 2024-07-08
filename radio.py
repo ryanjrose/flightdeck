@@ -35,8 +35,15 @@ class Radio:
                 ser.write(command.encode())
 
     def play_mp3_file(self, config, stdscr, mp3_file, total_action_time, radio):
-        pygame.mixer.music.load(os.path.join(config.get('mp3_folder'), mp3_file))
-        mp3_duration = MP3(os.path.join(config.get('mp3_folder'), mp3_file)).info.length
+        try:
+            pygame.mixer.music.load(os.path.join(config.get('mp3_folder'), mp3_file))
+            mp3_duration = MP3(os.path.join(config.get('mp3_folder'), mp3_file)).info.length
+        except pygame.error as e:
+            stdscr.addstr(10, 0, f"Error loading {mp3_file}: {e}")
+            stdscr.refresh()
+            time.sleep(5)
+            return
+
         play_start_time = time.time() + (total_action_time - mp3_duration)
 
         while time.time() < play_start_time:

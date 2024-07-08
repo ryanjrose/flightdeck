@@ -10,11 +10,11 @@ class Aircraft:
         self.id = data.get("hex", 'Unknown')
         self.track = data.get("track", 0)
         self.altitude = data.get("alt_baro", 99999)
-        self.speed = data.get("gs", None)
+        self.speed = data.get("gs", 0)
         self.latitude = data.get("lat", 0)
         self.longitude = data.get("lon", 0)
-        self.distance_from_center_miles = None
-        self.previous_altitude = None
+        self.distance_from_center_miles = 99
+        self.previous_altitude = 0
         self.is_landing = False
         self.is_takeoff = False
 
@@ -22,7 +22,7 @@ class Aircraft:
         if self.id in unique_aircraft:
             self.previous_altitude = unique_aircraft[self.id].get("previous_altitude", None)
             self.is_landing = self.is_landing_from_east()
-            self.is_takeoff = self.is_taking_off_from_west()
+            self.is_taking_off = self.is_taking_off_from_west()
             unique_aircraft[self.id]["previous_altitude"] = self.altitude
         else:
             unique_aircraft[self.id] = {"previous_altitude": self.altitude}
@@ -30,7 +30,6 @@ class Aircraft:
     def calculate_distance(self, lat1, lon1):
         lat2, lon2 = self.latitude, self.longitude
 
-        # Debugging output
         if lat2 is None or lon2 is None:
             print(f"Error: Missing coordinates for aircraft {self.callsign}: lat2={lat2}, lon2={lon2}")
             return None
@@ -46,7 +45,6 @@ class Aircraft:
     def calculate_closest_distance(self, lat1, lon1):
         lat2, lon2 = self.latitude, self.longitude
 
-        # Debugging output
         if lat2 is None or lon2 is None:
             print(f"Error: Missing coordinates for aircraft {self.callsign}: lat2={lat2}, lon2={lon2}")
             return 999

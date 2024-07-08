@@ -1,4 +1,5 @@
 import curses
+import pprint
 import requests
 import time
 import pygame
@@ -10,7 +11,7 @@ class Tower:
     def __init__(self, config_file='config.yml'):
         self.load_config(config_file)
         self.unique_aircraft = {}
-        self.spinner_chars = ['-', '\\', '|', '/']  # Define spinner characters
+        self.spinner_chars = ['-', '\\', '|', '/']
         self.checked_box = '\u2705'
         self.unchecked_box = '\u2B1B'
 
@@ -29,10 +30,11 @@ class Tower:
 
         nearby_aircraft = []
         for aircraft_data in aircraft_list:
-            aircraft = Aircraft(self.config, aircraft_data)
-            aircraft.distance_from_center_miles = aircraft.calculate_distance(self.config['flight_deck_latitude'], self.config['flight_deck_longitude'])
-            aircraft.update_state(self.unique_aircraft)
-            nearby_aircraft.append(aircraft)
+            if aircraft_data.get("flight", "Unknown") != "Unknown":
+                aircraft = Aircraft(self.config, aircraft_data)
+                aircraft.distance_from_center_miles = aircraft.calculate_distance(self.config['flight_deck_latitude'], self.config['flight_deck_longitude'])
+                aircraft.update_state(self.unique_aircraft)
+                nearby_aircraft.append(aircraft)
 
         return nearby_aircraft
 
@@ -41,10 +43,14 @@ class Tower:
         pygame.mixer.init()
         radio = Radio()
         mp3_files = Aircraft.get_shuffled_mp3_list(self.config)
-        spinner_index = 0  # Initialize spinner index
+        spinner_index = 0
 
         stdscr.clear()
         stdscr.nodelay(True)
+
+        # Define color pair for yellow text
+        curses.start_color()
+        curses.init_pair(1, curses.COLOR_YELLOW, curses.COLOR_BLACK)
 
         while True:
             nearby_aircraft = self.fetch_aircraft_data()
@@ -52,12 +58,15 @@ class Tower:
             if not nearby_aircraft:
                 time.sleep(0.1)
                 continue
-            nearby_aircraft = [ac for ac in nearby_aircraft if ac.calculate_closest_distance(self.config['flight_deck_latitude'], self.config['flight_deck_longitude']) is not None]
 
+            # Filter out instances where calculate_closest_distance returns None
+            nearby_aircraft = [ac for ac in nearby_aircraft if ac.calculate_closest_distance(self.config['flight_deck_latitude'], self.config['flight_deck_longitude']) != 999]
 
             stdscr.clear()
+            height, width = stdscr.getmaxyx()
             stdscr.addstr(0, 0, f"{self.spinner_chars[spinner_index]} Monitoring aircraft with descent and destination...")
-            spinner_index = (spinner_index + 1) % len(self.spinner_chars)  # Update spinner index
+            spinner_index = (spinner_index + 1) % len(self.spinner_chars)
+
             header_data = [
                 f"Callsign  ",
                 f"Category",
@@ -74,6 +83,8 @@ class Tower:
             stdscr.addstr(2, 0, " | ".join(header_data))
 
             for idx, aircraft in enumerate(nearby_aircraft, start=3):
+                if idx >= height - 1:
+                    break
                 stdscr.addstr(idx, 0, f"{aircraft.callsign:<11}")
                 stdscr.addstr(idx, 12, f"{aircraft.category:^10}")
                 stdscr.addstr(idx, 23, f"{aircraft.id:^10}")
@@ -89,16 +100,21 @@ class Tower:
             stdscr.refresh()
             time.sleep(0.1)
 
-            closest_aircraft = min(nearby_aircraft, key=lambda ac: ac.calculate_closest_distance(self.config['flight_deck_latitude'], self.config['flight_deck_longitude']))
+            if nearby_aircraft:
+                closest_aircraft = min(nearby_aircraft, key=lambda ac: ac.calculate_closest_distance(self.config['flight_deck_latitude'], self.config['flight_deck_longitude']))
 
-            total_action_time = closest_aircraft.calculate_closest_distance(self.config['flight_deck_latitude'], self.config['flight_deck_longitude']) * 60  # Assuming aircraft speed is 60 miles per minute
+                total_action_time = closest_aircraft.calculate_closest_distance(self.config['flight_deck_latitude'], self.config['flight_deck_longitude']) * 60
 
-            if closest_aircraft.is_within_trigger_radius() and closest_aircraft.is_speed_within_range() and closest_aircraft.is_altitude_within_range():
-                radio.play_mp3_file(self.config, stdscr, mp3_files[0], total_action_time, radio)
-                stdscr.clear()
-                stdscr.addstr(10, 0, "Waiting for next event...")
-                stdscr.refresh()
-                time.sleep(10)
+                if closest_aircraft.is_within_trigger_radius() and closest_aircraft.is_speed_within_range() and closest_aircraft.is_altitude_within_range():
+                    if mp3_files:
+                        radio.play_mp3_file(self.config, stdscr, mp3_files[0], total_action_time, radio)
+                    else:
+                        stdscr.addstr(1, 0, "No MP3 files to play.", curses.color_pair(1))
+                        stdscr.refresh()
+                        time.sleep(10)
+                else:
+                    stdscr.addstr(1, 0, "No valid aircraft to play MP3 for.", curses.color_pair(1))
+                    stdscr.refresh()
 
             if stdscr.getch() == ord('q'):
                 break

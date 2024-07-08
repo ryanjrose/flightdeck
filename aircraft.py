@@ -7,12 +7,12 @@ class Aircraft:
         self.config = config
         self.callsign = data.get("flight", "Unknown")
         self.category = data.get("category", "Unknown")
-        self.id = data.get("hex", None)
+        self.id = data.get("hex", 'Unknown')
         self.track = data.get("track", 0)
-        self.altitude = data.get("alt_baro", None)
+        self.altitude = data.get("alt_baro", 99999)
         self.speed = data.get("gs", None)
-        self.latitude = data.get("lat", None)
-        self.longitude = data.get("lon", None)
+        self.latitude = data.get("lat", 0)
+        self.longitude = data.get("lon", 0)
         self.distance_from_center_miles = None
         self.previous_altitude = None
         self.is_landing = False
@@ -49,7 +49,7 @@ class Aircraft:
         # Debugging output
         if lat2 is None or lon2 is None:
             print(f"Error: Missing coordinates for aircraft {self.callsign}: lat2={lat2}, lon2={lon2}")
-            return None
+            return 999
 
         heading = radians(self.track)
         lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])

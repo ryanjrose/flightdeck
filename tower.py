@@ -56,8 +56,7 @@ class Tower:
 
 
             stdscr.clear()
-            stdscr.addstr(0, 0, "Monitoring aircraft with descent and destination...")
-            stdscr.addstr(1, 0, f"Spinner: {self.spinner_chars[spinner_index]}")  # Display spinner
+            stdscr.addstr(0, 0, f"{self.spinner_chars[spinner_index]} Monitoring aircraft with descent and destination...")
             spinner_index = (spinner_index + 1) % len(self.spinner_chars)  # Update spinner index
             header_data = [
                 f"Callsign  ",
@@ -67,10 +66,10 @@ class Tower:
                 f"Altitude",
                 f"Speed",
                 f" Lat ",
-                f" Long ",
-                f"Distance from Center",
-                f"Is Landing",
-                f"Is Taking Off",
+                f" Long  ",
+                f"Miles to FD",
+                f"Landing",
+                f"Taking Off",
             ]
             stdscr.addstr(2, 0, " | ".join(header_data))
 
@@ -81,11 +80,11 @@ class Tower:
                 stdscr.addstr(idx, 34, f"{aircraft.track:^9}")
                 stdscr.addstr(idx, 44, f"{aircraft.altitude:^10}")
                 stdscr.addstr(idx, 55, f"{aircraft.speed:^7}")
-                stdscr.addstr(idx, 65, f"{aircraft.latitude:.2f}".center(5))
-                stdscr.addstr(idx, 69, f"{aircraft.longitude:.2f}")
-                stdscr.addstr(idx, 160, f"Distance from Center: {aircraft.distance_from_center_miles} miles")
-                stdscr.addstr(idx, 190, f"Is Landing: {self.checked_box if aircraft.is_landing else self.unchecked_box}")
-                stdscr.addstr(idx, 210, f"Is Taking Off: {self.checked_box if aircraft.is_takeoff else self.unchecked_box}")
+                stdscr.addstr(idx, 63, f"{aircraft.latitude:.2f}".center(5))
+                stdscr.addstr(idx, 72, f"{aircraft.longitude:.2f}")
+                stdscr.addstr(idx, 81, f"{aircraft.distance_from_center_miles:.1f} mi".center(13))
+                stdscr.addstr(idx, 94, f"{self.checked_box if aircraft.is_landing else self.unchecked_box}".center(10))
+                stdscr.addstr(idx, 105, f"{self.checked_box if aircraft.is_takeoff else self.unchecked_box}".center(11))
 
             stdscr.refresh()
             time.sleep(0.1)

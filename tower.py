@@ -180,7 +180,7 @@ class Tower:
 
         if not closest_aircraft.has_triggered_audio and closest_aircraft.is_in_trigger_radius() and closest_aircraft.is_speed_within_range() and closest_aircraft.is_altitude_within_range():
             if mp3_files:
-                closest_aircraft.radio.play_mp3_file(stdscr, mp3_files[0], total_action_time, closest_aircraft.callsign)
+                closest_aircraft.radio.play_mp3_file(stdscr, closest_aircraft.callsign, mp3_files[0], closest_aircraft.distance_from_center_miles, closest_aircraft.speed)
                 closest_aircraft.has_triggered_audio = True  # Update flag after playing the audio
             else:
                 self.display_message(stdscr, "No MP3 files to play.")

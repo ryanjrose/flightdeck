@@ -20,7 +20,7 @@ class Aircraft:
         self.altitude_history = deque(maxlen=3)  # Store last 3 altitude samples
         self.landing_from_east = False
         self.takeoff_from_west = False
-        self.has_triggered_playback = False
+        self.has_triggered_audio = False
         self.radio = Radio(config, self.logger)  # Each aircraft has its own Radio instance
 
     def update_state(self, unique_aircraft):

@@ -1,4 +1,5 @@
 import curses
+import pprint
 import logging
 import requests
 from systemd.journal import JournalHandler
@@ -13,8 +14,10 @@ class Tower:
         self.load_config(config_file)
         self.unique_aircraft = {}
         self.spinner_chars = ['-', '\\', '|', '/']
+        self.arrival_icon = '\u1F6EC'
+        self.depart_icon = '\u1F6EB'
         self.checked_box = '\u2705'
-        self.unchecked_box = '\u2B1B'
+        self.unchecked_box = ' ' #'\u2B1B'
 
     def setup_logging(self):
         self.logger = logging.getLogger('TowerLogger')
@@ -68,7 +71,12 @@ class Tower:
             else:
                 self.unique_aircraft[hex_id].update_data(aircraft_data)
 
-        nearby_aircraft = [aircraft for aircraft in self.unique_aircraft.values() if self.valid_aircraft(aircraft) and not self.ignore_aircraft(aircraft)]
+        nearby_aircraft = [
+            aircraft for aircraft in self.unique_aircraft.values()
+            if self.valid_aircraft(aircraft)
+            and not self.ignore_aircraft(aircraft)
+        ]
+
         return nearby_aircraft
 
     def valid_aircraft(self, aircraft):
@@ -106,6 +114,10 @@ class Tower:
             return True
         if self.config['ignore_high_performance_aircraft'] and aircraft.category == 'A6':
             return True
+        # Let a plane stay in the stats for 1 min after audio has triggered
+        if aircraft.has_triggered_audio and aircraft.has_triggered_audio + 60 < time.time():
+            return True
+
         return False
 
     def monitor_aircraft_with_descent_and_destination(self, stdscr):
@@ -205,7 +217,7 @@ class Tower:
         if not closest_aircraft.has_triggered_audio and closest_aircraft.is_in_trigger_radius() and closest_aircraft.is_speed_within_range() and closest_aircraft.is_altitude_within_range() and closest_aircraft.is_moving_towards_flight_deck():
             if mp3_files:
                 closest_aircraft.radio.play_mp3_file(stdscr, closest_aircraft.callsign, mp3_files[0], closest_aircraft.distance_from_center_miles, closest_aircraft.speed)
-                closest_aircraft.has_triggered_audio = True  # Update flag after playing the audio
+                closest_aircraft.has_triggered_audio = time.time()  # Update flag after playing the audio
                 self.logger.info(f"Playing MP3 for aircraft: {closest_aircraft.callsign}")
             else:
                 self.display_message(stdscr, "No MP3 files to play.")

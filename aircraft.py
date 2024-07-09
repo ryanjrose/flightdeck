@@ -5,8 +5,9 @@ from math import radians, acos, cos, sin, asin, sqrt, atan2, degrees
 from radio import Radio
 
 class Aircraft:
-    def __init__(self, config, data):
+    def __init__(self, config, data, logger):
         self.config = config
+        self.logger = logger
         self.callsign = data.get("flight", "Unknown")
         self.category = data.get("category", "Unknown")
         self.id = data.get("hex", 'Unknown')
@@ -17,19 +18,21 @@ class Aircraft:
         self.longitude = data.get("lon", 0)
         self.distance_from_center_miles = 99
         self.altitude_history = deque(maxlen=3)  # Store last 3 altitude samples
-        self.is_landing = False
-        self.is_takeoff = False
-        self.radio = Radio(config)  # Each aircraft has its own Radio instance
+        self.landing_from_east = False
+        self.takeoff_from_west = False
+        self.has_triggered_playback = False
+        self.radio = Radio(config, self.logger)  # Each aircraft has its own Radio instance
 
     def update_state(self, unique_aircraft):
         self.altitude_history.append(self.altitude)  # Update altitude history
         if self.id in unique_aircraft:
-            self.is_landing_from_east = self.is_landing_from_east()
-            self.is_taking_off_from_west = self.is_taking_off_from_west()
+            self.landing_from_east = self.is_landing_from_east()
+            self.takeoff_from_west = self.is_taking_off_from_west()
         else:
             unique_aircraft[self.id] = self.altitude_history
 
-    def calculate_distance(self, lat1, lon1):
+    def calculate_distance(self):
+        lat1, lon1 = self.config['flight_deck_latitude'], self.config['flight_deck_longitude']
         lat2, lon2 = self.latitude, self.longitude
 
         if lat2 is None or lon2 is None:
@@ -44,7 +47,8 @@ class Aircraft:
         r = 3956  # Radius of earth in miles
         return c * r
 
-    def calculate_closest_distance(self, lat1, lon1):
+    def calculate_closest_distance(self):
+        lat1, lon1 = self.config['flight_deck_latitude'], self.config['flight_deck_longitude']
         lat2, lon2 = self.latitude, self.longitude
 
         if lat2 is None or lon2 is None:
@@ -116,6 +120,7 @@ class Aircraft:
         return all(self.altitude_history[i] > self.altitude_history[i + 1] for i in range(len(self.altitude_history) - 1))
 
     def is_landing_from_east(self):
+        self.logger.info(f"({self.callsign}) east of FD: {self.is_east_of_flight_deck()} : on west heading: {self.is_on_west_heading()} : is descending: {self.is_descending()}")
         return self.is_east_of_flight_deck() and self.is_on_west_heading() and self.is_descending()
 
     def is_taking_off_from_west(self):

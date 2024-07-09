@@ -21,7 +21,7 @@ tar1090_url: http://localhost/tar1090/data/aircraft.json
 mp3_folder: ./audio/chatter
 flight_deck_latitude: 32.7178  # Latitude for 1625 Grove St, San Diego, CA 92102
 flight_deck_longitude: -117.1275  # Longitude for 1625 Grove St, San Diego, CA 92102
-aircraft_monitoring_radius: 6  # 6 miles radius around the specified location
+aircraft_monitoring_radius: 8  # 8 miles radius around the specified location
 aircraft_trigger_radius: 3  # Trigger radius in miles
 aircraft_landing_runway: 28 # SAN DIEGO Runway 27
 aircraft_takeoff_runway: 10 # SAN DIEGO Runway 09
@@ -31,7 +31,7 @@ max_altitude_feet: 2000  # Maximum altitude of 1500 feet above ground (adjust as
 min_speed_knots: 100 # Minimum speed of 75 knots
 max_speed_knots: 200  # Maximum speed of 290 knots
 start_effects_early: 2 # Starts lightning effects early and lets them sit before playing audio
-finish_playback_seconds_before_arrival: 3 # finish audio playback x secomds before plane arrives at flightdeck
+finish_audio_seconds_before_arrival: 3 # finish audio playback x secomds before plane arrives at flightdeck
 polling_interval: 3 # check for aircraft at this interval in seconds (dont recommend less than 3)
 ignore_helicopters: True
 ignore_light_aircraft: False

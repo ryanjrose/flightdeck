@@ -38,8 +38,8 @@ class Aircraft:
 
     def update_state(self):
         self.altitude_history.append(self.altitude)  # Update altitude history
-        self.landing_from_east = self.is_landing_from_east()
-        self.taking_off_from_west = self.is_taking_off_from_west()
+        self.is_landing = self.is_landing_from_east()
+        self.is_takeoff = self.is_taking_off_from_west()
 
     def calculate_distance(self, lat1, lon1):
         lat2, lon2 = self.latitude, self.longitude
@@ -92,10 +92,22 @@ class Aircraft:
         return next_distance > current_distance
 
     def is_landing_from_east(self):
-        return self.is_east_of_flight_deck() and self.is_on_west_heading() and self.is_descending()
+        if self.is_landing == True:
+            return True
+        elif self.is_east_of_flight_deck() and self.is_on_west_heading() and self.is_descending():
+            self.is_landing = True
+            return True
+        else:
+            return False
 
     def is_taking_off_from_west(self):
-        return self.is_west_of_flight_deck() and self.is_on_west_heading() and self.is_ascending()
+        if self.is_takeoff == True:
+            return True
+        elif self.is_west_of_flight_deck() and self.is_on_west_heading() and self.is_ascending():
+            self.is_takeoff = True
+            return True
+        else:
+            return False
 
     def is_in_monitoring_radius(self):
         return self.distance_from_center_miles <= self.config['aircraft_monitoring_radius']
@@ -110,10 +122,11 @@ class Aircraft:
         return self.config['min_altitude_feet'] <= self.altitude <= self.config['max_altitude_feet']
 
     def is_east_of_flight_deck(self):
-        return self.longitude < self.config['flight_deck_longitude']
+        return self.latitude < self.config['flight_deck_latitude']
 
+    # function to determine if plane is travelling within 10 degrees of self.config['aircraft_landing_runway']
     def is_on_west_heading(self):
-        return abs(self.track - 270) <= self.config['allowed_heading_deviation']
+        return abs(self.track - self.config['aircraft_landing_runway']*10) <= self.config['allowed_heading_deviation']
 
     def is_descending(self):
         if len(self.altitude_history) < 3:

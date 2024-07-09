@@ -161,7 +161,7 @@ class Tower:
     def display_header(self, stdscr):
         header_data = [
             "Callsign ", "Category", "ID     ", "Track ", "Altitude", "Speed ", 
-            "Lat   ", "Long  ", "Miles to FD", "Landing", "Taking Off", 
+            "Lat   ", "Long  ", "Miles to FD", "TakeOff", "Landing", 
             "TrigAudio", "InTrigRad", "SpdInRng", "AltInRng", "MovTowFD"
         ]
         stdscr.addstr(2, 0, " | ".join(header_data))
@@ -180,13 +180,13 @@ class Tower:
             stdscr.addstr(idx, 62, f"{aircraft.latitude:.2f}".center(6))
             stdscr.addstr(idx, 71, f"{aircraft.longitude:.2f}".center(6))
             stdscr.addstr(idx, 80, f"{aircraft.distance_from_center_miles:.1f} mi".center(11))
-            stdscr.addstr(idx, 94, f"{self.checked_box if aircraft.landing_from_east else self.unchecked_box}".center(8))
-            stdscr.addstr(idx, 104, f"{self.checked_box if aircraft.taking_off_from_west else self.unchecked_box}".center(10))
-            stdscr.addstr(idx, 117, f"{str(aircraft.has_triggered_audio):^9}")
-            stdscr.addstr(idx, 129, f"{str(aircraft.is_in_trigger_radius()):^9}")
-            stdscr.addstr(idx, 141, f"{str(aircraft.is_speed_within_range()):^8}")
-            stdscr.addstr(idx, 152, f"{str(aircraft.is_altitude_within_range()):^8}")
-            stdscr.addstr(idx, 163, f"{str(aircraft.is_moving_towards_flight_deck()):^8}")
+            stdscr.addstr(idx, 94, f"{self.checked_box if aircraft.is_takeoff else self.unchecked_box}".center(8))
+            stdscr.addstr(idx, 104, f"{self.checked_box if aircraft.is_landing else self.unchecked_box}".center(8))
+            stdscr.addstr(idx, 114, f"{self.checked_box if aircraft.has_triggered_audio else self.unchecked_box}".center(9))
+            stdscr.addstr(idx, 126, f"{self.checked_box if aircraft.is_in_trigger_radius() else self.unchecked_box}".center(9))
+            stdscr.addstr(idx, 138, f"{self.checked_box if aircraft.is_speed_within_range() else self.unchecked_box}".center(8))
+            stdscr.addstr(idx, 149, f"{self.checked_box if aircraft.is_altitude_within_range() else self.unchecked_box}".center(8))
+            stdscr.addstr(idx, 160, f"{self.checked_box if aircraft.is_moving_towards_flight_deck() else self.unchecked_box}".center(8))
 
     def process_closest_aircraft(self, stdscr, nearby_aircraft, mp3_files):
         closest_aircraft = min(nearby_aircraft, key=lambda ac: ac.calculate_closest_distance())

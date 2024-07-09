@@ -28,25 +28,32 @@ class Radio:
             with serial.Serial(esp_port, 115200, timeout=1) as ser:
                 ser.write(command.encode())
 
-    def play_mp3_file(self, stdscr, mp3_file, total_action_time, callsign):
+    def play_mp3_file(self, stdscr, callsign, mp3_file, distance_to_flight_deck, speed):
         try:
             pygame.mixer.music.load(os.path.join(self.config.get('mp3_folder'), mp3_file))
             mp3_duration = MP3(os.path.join(self.config.get('mp3_folder'), mp3_file)).info.length
         except pygame.error as e:
-            stdscr.addstr(3, 0, f"Error loading {mp3_file}: {e}", curses.color_pair(1))
-            stdscr.refresh()
-            time.sleep(5)
+            self.logger.error(f"Error loading {mp3_file}: {e}")
+            self.display_message(stdscr, f"Error loading {mp3_file}: {e}")
             return
 
-        play_start_time = time.time() + (total_action_time - mp3_duration)
+        # Calculate the ETA based on the distance and speed
+        if speed >= self.config['min_speed_knots']:
+            eta = distance_to_flight_deck / speed * 3600  # ETA in seconds
+        else:
+            self.logger.error(f"{callsign} speed too slow; won't calculate ETA.")
+            return
+
+        # Calculate play_start_time so that the mp3 finishes when the aircraft is nearest to the flight deck
+        play_start_time = time.time() + (eta - mp3_duration)
 
         while time.time() < play_start_time:
-            self.logger.error(f"{callsign} Waiting to play {mp3_file} in {round(play_start_time - time.time(), 2)} seconds...", curses.color_pair(1))
-            stdscr.refresh()
-            time.sleep(0.1)
+            remaining_time = round(play_start_time - time.time(), 2)
+            self.logger.debug(f"{callsign} Waiting to play {mp3_file} in {remaining_time} seconds...")
+            self.display_message(stdscr, f"Waiting to play {mp3_file} for {callsign} in {remaining_time} seconds...")
+            time.sleep(0.5)
 
-        stdscr.addstr(1, 0, f"{callsign} Playing {mp3_file}", curses.color_pair(1))
-        stdscr.refresh()
+        self.display_message(stdscr, f"Playing {mp3_file} for {callsign}")
         pygame.mixer.music.play()
 
         effect_command = self.config.get('idle_effects')[0].get('wled_command') or "{'ps': 1}"
@@ -55,5 +62,10 @@ class Radio:
         while pygame.mixer.music.get_busy():
             time.sleep(0.1)
 
-        stdscr.addstr(3, 0, f"Finished playing {mp3_file}", curses.color_pair(1))
+        self.display_message(stdscr, f"Finished playing {mp3_file} for {callsign}")
+
+    def display_message(self, stdscr, message):
+        stdscr.clear()
+        stdscr.addstr(1, 0, message, curses.color_pair(1))
         stdscr.refresh()
+

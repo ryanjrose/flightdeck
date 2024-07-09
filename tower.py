@@ -17,15 +17,12 @@ class Tower:
         self.unchecked_box = '\u2B1B'
 
     def setup_logging(self):
-        #logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
         self.logger = logging.getLogger()
         # Create a custom logger
 
         # Create handlers
         j_handler = JournalHandler()
 
-        # Set level for handlers
-        j_handler.setLevel(logging.DEBUG)
 
         # Create formatters and add it to handlers
         j_format = logging.Formatter('%(levelname)s - %(message)s')
@@ -134,6 +131,12 @@ class Tower:
         stdscr.refresh()
     
     def ignore_aircraft(self, aircraft):
+        # Full list of category emitters here
+        # https://www.adsbexchange.com/emitter-category-ads-b-do-260b-2-2-3-2-5-2/
+        if aircraft.category.startswith('C'): # Ignore all ground vehicles
+            return True
+        if aircraft.category.startswith('B'): # Ignore all ground gliders
+            return True
         if self.config['ignore_helicopters'] and aircraft.category == 'A7':
             return True
         if self.config['ignore_light_aircraft'] and aircraft.category == 'A1':
@@ -173,11 +176,11 @@ class Tower:
 
     def process_closest_aircraft(self, stdscr, nearby_aircraft, mp3_files):
         closest_aircraft = min(nearby_aircraft, key=lambda ac: ac.calculate_closest_distance())
-        total_action_time = closest_aircraft.calculate_closest_distance() * 60
+        total_action_time = 1 #closest_aircraft.calculate_closest_distance() * 60
 
         if not closest_aircraft.has_triggered_audio and closest_aircraft.is_in_trigger_radius() and closest_aircraft.is_speed_within_range() and closest_aircraft.is_altitude_within_range():
             if mp3_files:
-                closest_aircraft.radio.play_mp3_file(stdscr, closest_aircraft.callsign, mp3_files[0], total_action_time)
+                closest_aircraft.radio.play_mp3_file(stdscr, mp3_files[0], total_action_time, closest_aircraft.callsign)
                 closest_aircraft.has_triggered_audio = True  # Update flag after playing the audio
             else:
                 self.display_message(stdscr, "No MP3 files to play.")

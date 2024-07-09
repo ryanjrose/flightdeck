@@ -34,12 +34,7 @@ class Aircraft:
         self.latitude = data.get("lat", self.latitude)
         self.longitude = data.get("lon", self.longitude)
         self.distance_from_center_miles = self.calculate_distance(self.config['flight_deck_latitude'], self.config['flight_deck_longitude'])
-        self.update_state()
-
-    def update_state(self):
-        self.altitude_history.append(self.altitude)  # Update altitude history
-        self.landing_from_east = self.is_landing_from_east()
-        self.taking_off_from_west = self.is_taking_off_from_west()
+        self.update_state(self.config)
 
     def calculate_distance(self, lat1, lon1):
         lat2, lon2 = self.latitude, self.longitude
@@ -89,7 +84,7 @@ class Aircraft:
         next_longitude = self.longitude + (self.speed * sin(radians(self.track)) / 3600)
         next_distance = self.calculate_distance(next_latitude, next_longitude)
 
-        return next_distance > current_distance
+        return next_distance < current_distance
 
     def is_landing_from_east(self):
         return self.is_east_of_flight_deck() and self.is_on_west_heading() and self.is_descending()
@@ -97,40 +92,10 @@ class Aircraft:
     def is_taking_off_from_west(self):
         return self.is_west_of_flight_deck() and self.is_on_west_heading() and self.is_ascending()
 
-    def is_in_monitoring_radius(self):
-        return self.distance_from_center_miles <= self.config['aircraft_monitoring_radius']
-
-    def is_in_trigger_radius(self):
-        return self.distance_from_center_miles <= self.config['aircraft_trigger_radius']
-
-    def is_speed_within_range(self):
-        return self.config['min_speed_knots'] <= self.speed <= self.config['max_speed_knots']
-
-    def is_altitude_within_range(self):
-        return self.config['min_altitude_feet'] <= self.altitude <= self.config['max_altitude_feet']
-
-    def is_east_of_flight_deck(self):
-        return self.longitude < self.config['flight_deck_longitude']
-
-    def is_on_west_heading(self):
-        return abs(self.track - 270) <= self.config['allowed_heading_deviation']
-
-    def is_descending(self):
-        if len(self.altitude_history) < 3:
-            return False
-        return all(x > y for x, y in zip(self.altitude_history, list(self.altitude_history)[1:]))
-
-    def is_west_of_flight_deck(self):
-        return self.longitude > self.config['flight_deck_longitude']
-
-    def is_ascending(self):
-        if len(self.altitude_history) < 3:
-            return False
-        return all(x < y for x, y in zip(self.altitude_history, list(self.altitude_history)[1:]))
-
     @staticmethod
     def get_shuffled_mp3_list(config):
         mp3_folder = config.get('mp3_folder')
         mp3_files = [f for f in os.listdir(mp3_folder) if f.endswith('.mp3')]
         random.shuffle(mp3_files)
         return mp3_files
+

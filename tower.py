@@ -17,20 +17,19 @@ class Tower:
         self.unchecked_box = '\u2B1B'
 
     def setup_logging(self):
-        self.logger = logging.getLogger()
-        # Create a custom logger
-
+        self.logger = logging.getLogger('TowerLogger')
+        self.logger.setLevel(logging.DEBUG)
+        
         # Create handlers
         j_handler = JournalHandler()
-
-
+        
         # Create formatters and add it to handlers
         j_format = logging.Formatter('%(levelname)s - %(message)s')
-
         j_handler.setFormatter(j_format)
-
+        
         # Add handlers to the logger
         self.logger.addHandler(j_handler)
+        self.logger.info("Logging setup complete.")
 
     def load_config(self, config_file):
         try:
@@ -62,13 +61,14 @@ class Tower:
             return []
 
     def process_aircraft_data(self, aircraft_list):
-        nearby_aircraft = []
         for aircraft_data in aircraft_list:
-            aircraft = Aircraft(self.config, aircraft_data, self.logger)
-            aircraft.distance_from_center_miles = aircraft.calculate_distance()
-            aircraft.update_state(self.unique_aircraft)
-            if self.valid_aircraft(aircraft) and not self.ignore_aircraft(aircraft):
-                nearby_aircraft.append(aircraft)
+            hex_id = aircraft_data.get("hex")
+            if hex_id not in self.unique_aircraft:
+                self.unique_aircraft[hex_id] = Aircraft(self.config, aircraft_data, self.logger)
+            else:
+                self.unique_aircraft[hex_id].update_data(aircraft_data)
+
+        nearby_aircraft = [aircraft for aircraft in self.unique_aircraft.values() if self.valid_aircraft(aircraft) and not self.ignore_aircraft(aircraft)]
         return nearby_aircraft
 
     def valid_aircraft(self, aircraft):
@@ -89,28 +89,56 @@ class Tower:
         else:
             return True
 
+    def ignore_aircraft(self, aircraft):
+        if aircraft.category.startswith('C'):  # Ignore all ground vehicles
+            return True
+        if aircraft.category.startswith('B'):  # Ignore all ground gliders
+            return True
+        if self.config['ignore_helicopters'] and aircraft.category == 'A7':
+            return True
+        if self.config['ignore_light_aircraft'] and aircraft.category == 'A1':
+            return True
+        if self.config['ignore_small_aircraft'] and aircraft.category == 'A2':
+            return True
+        if self.config['ignore_large_aircraft'] and aircraft.category == 'A3':
+            return True
+        if self.config['ignore_heavy_aircraft'] and aircraft.category == 'A5':
+            return True
+        if self.config['ignore_high_performance_aircraft'] and aircraft.category == 'A6':
+            return True
+        return False
+
     def monitor_aircraft_with_descent_and_destination(self, stdscr):
-        self.initialize_pygame()
-        mp3_files = Aircraft.get_shuffled_mp3_list(self.config)
-        spinner_index = 0
+        try:
+            self.initialize_pygame()
+            mp3_files = Aircraft.get_shuffled_mp3_list(self.config)
+            spinner_index = 0
 
-        self.setup_curses_screen(stdscr)
+            self.setup_curses_screen(stdscr)
 
-        while True:
-            nearby_aircraft = self.fetch_aircraft_data()
+            while True:
+                try:
+                    nearby_aircraft = self.fetch_aircraft_data()
 
-            if not nearby_aircraft:
-                time.sleep(0.1)
-                continue
+                    if not nearby_aircraft:
+                        time.sleep(0.1)
+                        continue
 
-            self.update_curses_display(stdscr, nearby_aircraft, spinner_index)
-            spinner_index = (spinner_index + 1) % len(self.spinner_chars)
+                    self.update_curses_display(stdscr, nearby_aircraft, spinner_index)
+                    spinner_index = (spinner_index + 1) % len(self.spinner_chars)
 
-            if nearby_aircraft:
-                self.process_closest_aircraft(stdscr, nearby_aircraft, mp3_files)
+                    if nearby_aircraft:
+                        self.process_closest_aircraft(stdscr, nearby_aircraft, mp3_files)
 
-            if stdscr.getch() == ord('q'):
-                break
+                    if stdscr.getch() == ord('q'):
+                        break
+
+                except Exception as e:
+                    self.logger.error(f"Error during monitoring loop: {e}")
+                    time.sleep(1)
+
+        except Exception as e:
+            self.logger.error(f"Failed to initialize monitoring: {e}")
 
     def initialize_pygame(self):
         pygame.mixer.pre_init(frequency=44100, size=-16, channels=2, buffer=8192)
@@ -129,31 +157,12 @@ class Tower:
         self.display_header(stdscr)
         self.display_aircraft_data(stdscr, nearby_aircraft)
         stdscr.refresh()
-    
-    def ignore_aircraft(self, aircraft):
-        # Full list of category emitters here
-        # https://www.adsbexchange.com/emitter-category-ads-b-do-260b-2-2-3-2-5-2/
-        if aircraft.category.startswith('C'): # Ignore all ground vehicles
-            return True
-        if aircraft.category.startswith('B'): # Ignore all ground gliders
-            return True
-        if self.config['ignore_helicopters'] and aircraft.category == 'A7':
-            return True
-        if self.config['ignore_light_aircraft'] and aircraft.category == 'A1':
-            return True
-        if self.config['ignore_small_aircraft'] and aircraft.category == 'A2':
-            return True
-        if self.config['ignore_large_aircraft'] and aircraft.category == 'A3':
-            return True
-        if self.config['ignore_heavy_aircraft'] and aircraft.category == 'A5':
-            return True
-        if self.config['ignore_high_performance_aircraft'] and aircraft.category == 'A6':
-            return True
 
     def display_header(self, stdscr):
         header_data = [
-            "Callsign  ", "Category", "   ID   ", " Track ", "Altitude", "Speed",
-            " Lat ", " Long  ", "Miles to FD", "Landing", "Taking Off"
+            "Callsign ", "Category", "ID     ", "Track ", "Altitude", "Speed ", 
+            "Lat   ", "Long  ", "Miles to FD", "Landing", "Taking Off", 
+            "TrigAudio", "InTrigRad", "SpdInRng", "AltInRng", "MovTowFD"
         ]
         stdscr.addstr(2, 0, " | ".join(header_data))
 
@@ -162,26 +171,42 @@ class Tower:
         for idx, aircraft in enumerate(nearby_aircraft, start=3):
             if idx >= height - 1:
                 break
-            stdscr.addstr(idx, 0, f"{aircraft.callsign:<11}")
-            stdscr.addstr(idx, 12, f"{aircraft.category:^10}")
-            stdscr.addstr(idx, 23, f"{aircraft.id:^10}")
-            stdscr.addstr(idx, 34, f"{aircraft.track:^9}")
-            stdscr.addstr(idx, 44, f"{aircraft.altitude:^10}")
-            stdscr.addstr(idx, 55, f"{aircraft.speed:^7}")
-            stdscr.addstr(idx, 63, f"{aircraft.latitude:.2f}".center(5))
-            stdscr.addstr(idx, 72, f"{aircraft.longitude:.2f}")
-            stdscr.addstr(idx, 81, f"{aircraft.distance_from_center_miles:.1f} mi".center(13))
-            stdscr.addstr(idx, 94, f"{self.checked_box if aircraft.landing_from_east else self.unchecked_box}".center(10))
-            stdscr.addstr(idx, 105, f"{self.checked_box if aircraft.takeoff_from_west else self.unchecked_box}".center(11))
+            stdscr.addstr(idx, 0, f"{aircraft.callsign:<8}")
+            stdscr.addstr(idx, 12, f"{aircraft.category:^8}")
+            stdscr.addstr(idx, 23, f"{aircraft.id:^9}")
+            stdscr.addstr(idx, 33, f"{aircraft.track:^6}")
+            stdscr.addstr(idx, 42, f"{aircraft.altitude:^8}")
+            stdscr.addstr(idx, 53, f"{aircraft.speed:^5}")
+            stdscr.addstr(idx, 62, f"{aircraft.latitude:.2f}".center(6))
+            stdscr.addstr(idx, 71, f"{aircraft.longitude:.2f}".center(6))
+            stdscr.addstr(idx, 80, f"{aircraft.distance_from_center_miles:.1f} mi".center(11))
+            stdscr.addstr(idx, 94, f"{self.checked_box if aircraft.landing_from_east else self.unchecked_box}".center(8))
+            stdscr.addstr(idx, 104, f"{self.checked_box if aircraft.taking_off_from_west else self.unchecked_box}".center(10))
+            stdscr.addstr(idx, 117, f"{str(aircraft.has_triggered_audio):^9}")
+            stdscr.addstr(idx, 129, f"{str(aircraft.is_in_trigger_radius()):^9}")
+            stdscr.addstr(idx, 141, f"{str(aircraft.is_speed_within_range()):^8}")
+            stdscr.addstr(idx, 152, f"{str(aircraft.is_altitude_within_range()):^8}")
+            stdscr.addstr(idx, 163, f"{str(aircraft.is_moving_towards_flight_deck()):^8}")
 
     def process_closest_aircraft(self, stdscr, nearby_aircraft, mp3_files):
         closest_aircraft = min(nearby_aircraft, key=lambda ac: ac.calculate_closest_distance())
-        total_action_time = 1 #closest_aircraft.calculate_closest_distance() * 60
+        total_action_time = 1  # closest_aircraft.calculate_closest_distance() * 60
 
-        if not closest_aircraft.has_triggered_audio and closest_aircraft.is_in_trigger_radius() and closest_aircraft.is_speed_within_range() and closest_aircraft.is_altitude_within_range():
+        self.logger.debug(f"Processing aircraft: {closest_aircraft.callsign}")
+        self.logger.debug(f"Distance from center: {closest_aircraft.distance_from_center_miles}")
+        self.logger.debug(f"Speed: {closest_aircraft.speed}")
+        self.logger.debug(f"Altitude: {closest_aircraft.altitude}")
+        self.logger.debug(f"Has triggered audio: {closest_aircraft.has_triggered_audio}")
+        self.logger.debug(f"In trigger radius: {closest_aircraft.is_in_trigger_radius()}")
+        self.logger.debug(f"Speed within range: {closest_aircraft.is_speed_within_range()}")
+        self.logger.debug(f"Altitude within range: {closest_aircraft.is_altitude_within_range()}")
+        self.logger.debug(f"Moving towards flight deck: {closest_aircraft.is_moving_towards_flight_deck()}")
+
+        if not closest_aircraft.has_triggered_audio and closest_aircraft.is_in_trigger_radius() and closest_aircraft.is_speed_within_range() and closest_aircraft.is_altitude_within_range() and closest_aircraft.is_moving_towards_flight_deck():
             if mp3_files:
                 closest_aircraft.radio.play_mp3_file(stdscr, closest_aircraft.callsign, mp3_files[0], closest_aircraft.distance_from_center_miles, closest_aircraft.speed)
                 closest_aircraft.has_triggered_audio = True  # Update flag after playing the audio
+                self.logger.info(f"Playing MP3 for aircraft: {closest_aircraft.callsign}")
             else:
                 self.display_message(stdscr, "No MP3 files to play.")
         else:

@@ -3,6 +3,7 @@ import random
 from collections import deque
 from math import radians, acos, cos, sin, asin, sqrt, atan2, degrees
 from radio import Radio
+import time
 
 class Aircraft:
     def __init__(self, config, data, logger):
@@ -21,6 +22,7 @@ class Aircraft:
         self.seen_count = 1
         self.is_landing = False
         self.is_takeoff = False
+        self.last_seen_in_monitoring_radius = time.time()
         self.vert_rate = 0
         self.radio = Radio(config, logger)  # Each aircraft has its own Radio instance
         self.has_triggered_audio = False  # Flag to track if audio has been triggered

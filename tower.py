@@ -128,6 +128,7 @@ class Tower:
         elif aircraft.speed == 0:
             return False
         elif not aircraft.is_in_monitoring_radius():
+            self.last_seen_in_monitoring_radius = time.time()
             return False
         else:
             return True
@@ -148,6 +149,8 @@ class Tower:
         if self.config['ignore_heavy_aircraft'] and aircraft.category == 'A5':
             return True
         if self.config['ignore_high_performance_aircraft'] and aircraft.category == 'A6':
+            return True
+        if time.time() - aircraft.last_seen_in_monitoring_radius > self.config['expire_old_planes']:
             return True
         # Let a plane stay in the stats for 1 min after audio has triggered
         if aircraft.has_triggered_audio and aircraft.has_triggered_audio + self.config['expire_old_planes'] < time.time():

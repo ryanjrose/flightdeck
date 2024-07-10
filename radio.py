@@ -75,6 +75,8 @@ class Radio:
             self.display_message(stdscr, f"Waiting to play {mp3_file} for {callsign} in {remaining_time} seconds...")
             time.sleep(0.5)
 
+        if play_start_time > time.time() + .25:
+            return
         self.display_message(stdscr, f"Playing {mp3_file} for {callsign}")
         pygame.mixer.music.play()
 

@@ -80,13 +80,20 @@ class Radio:
         self.display_message(stdscr, f"Playing {mp3_file} for {callsign}")
         pygame.mixer.music.play()
 
-        effect_command = self.config.get('idle_effects')[0].get('wled_command') or "{'ps': 1}"
-        self.send_command(effect_command)
-
+        # for each wled_command in config['audio_effects'][<mp3_file_name>], play each wled_command for the effect_duration
+        for wled_command in self.config['audio_effects'][mp3_file]:
+            self.send_command(wled_command['wled_command'])
+            if wled_command['effect_duration'] == 0:
+                while pygame.mixer.music.get_busy():
+                    time.sleep(1)
+            else:
+                time.sleep(wled_command['effect_duration'])
         while pygame.mixer.music.get_busy():
-            time.sleep(0.1)
+            time.sleep(1)
 
         self.display_message(stdscr, f"Finished playing {mp3_file} for {callsign}")
+        effect_command = self.config.get('idle_effects')[0].get('wled_command') or "{'ps': 1}"
+        self.send_command(effect_command)
 
 
     def _play_mp3_file(self, stdscr, callsign, mp3_file, distance_to_flight_deck, speed):
@@ -133,7 +140,6 @@ class Radio:
         self.send_command(effect_command)
 
     def display_message(self, stdscr, message):
-        stdscr.clear()
         stdscr.addstr(1, 0, message, curses.color_pair(1))
         stdscr.refresh()
 

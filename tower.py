@@ -164,6 +164,7 @@ class Tower:
             self.setup_curses_screen(stdscr)
 
             while True:
+                self.display_message(stdscr, '')
                 try:
                     self.can_chatter()
                     nearby_aircraft = self.fetch_aircraft_data()
@@ -245,15 +246,24 @@ class Tower:
         closest_aircraft = min(nearby_aircraft, key=lambda ac: ac.calculate_closest_distance())
         total_action_time = 1  # closest_aircraft.calculate_closest_distance() * 60
 
-        #self.logger.debug(f"Processing aircraft: {closest_aircraft.callsign}")
+        self.logger.debug(f"Processing aircraft: {closest_aircraft.callsign}")
         #self.logger.debug(f"Distance from center: {closest_aircraft.distance_from_center_miles}")
-        #self.logger.debug(f"Speed: {closest_aircraft.speed}")
-        #self.logger.debug(f"Altitude: {closest_aircraft.altitude}")
+        debug_messg = f"Speed: {closest_aircraft.speed}\n" + \
+                        f"Altitude: {closest_aircraft.altitude} ({self.config['min_altitude_feet']} - {self.config['max_altitude_feet']}\n" + \
+                        f"TAKEOFF: {closest_aircraft.is_takeoff}\n" + \
+                        f"Climb Rate: {closest_aircraft.vert_rate}\n" + \
+                        f"On West Heading: {closest_aircraft.is_on_west_heading()}\n" + \
+                        f"Actual Takeoff Hedg: {closest_aircraft.track} ({(self.config['aircraft_takeoff_runway']*10)-self.config['allowed_heading_deviation']} - {(self.config['aircraft_takeoff_runway']*10)+self.config['allowed_heading_deviation']}\n" + \
+                        f"Actual Landing Hedg: {closest_aircraft.track} ({(self.config['aircraft_landing_runway']*10)-self.config['allowed_heading_deviation']} - {(self.config['aircraft_landing_runway']*10)+self.config['allowed_heading_deviation']}\n" + \
+                        f"Speed: {closest_aircraft.speed}" 
+
+        self.logger.debug(debug_messg) 
         #self.logger.debug(f"Has triggered audio: {closest_aircraft.has_triggered_audio}")
         #self.logger.debug(f"In trigger radius: {closest_aircraft.is_in_trigger_radius()}")
         #self.logger.debug(f"Speed within range: {closest_aircraft.is_speed_within_range()}")
         #self.logger.debug(f"Altitude within range: {closest_aircraft.is_altitude_within_range()}")
-        #self.logger.debug(f"Moving towards flight deck: {closest_aircraft.is_moving_towards_flight_deck()}")
+        self.logger.debug(f"Moving towards flight deck: {closest_aircraft.is_moving_towards_flight_deck()}")
+        self.logger.warn(f"\n")
 
         
 

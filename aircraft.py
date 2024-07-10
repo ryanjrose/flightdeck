@@ -21,6 +21,7 @@ class Aircraft:
         self.seen_count = 1
         self.is_landing = False
         self.is_takeoff = False
+        self.vert_rate = 0
         self.radio = Radio(config, logger)  # Each aircraft has its own Radio instance
         self.has_triggered_audio = False  # Flag to track if audio has been triggered
 
@@ -137,7 +138,9 @@ class Aircraft:
     def is_taking_off_from_west(self):
         if self.is_takeoff == True:
             return True
-        elif self.is_west_of_flight_deck() and self.is_on_west_heading() and self.is_ascending():
+        # west of flight deck, altitude is below 2500, vert_rate > 2000
+        elif self.is_west_of_flight_deck() and self.altitude < 2500 and self.vert_rate > 2000:
+        #elif self.is_west_of_flight_deck() and self.is_on_west_heading() and self.is_ascending():
             self.is_takeoff = True
             return True
         else:
@@ -176,7 +179,7 @@ class Aircraft:
         return avg_vert_cal_rate <= self.config['min_landing_descent_rate']
 
     def is_ascending(self):
-        if len(self.altitude_history) < 3:
+        if len(self.altitude_history) < 2:
             return False
         avg_vert_cal_rate = sum(self.altitude_history) / len(self.altitude_history)
         return avg_vert_cal_rate >= self.config['min_takeoff_climb_rate']

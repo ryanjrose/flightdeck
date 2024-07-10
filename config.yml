@@ -19,7 +19,7 @@ max_speed_knots: 200             # Maximum speed of 290 knots
 start_effects_early: 2           # Starts lightning effects early and lets them sit before playing audio
 audio_completion_offset: 10      # the number of seconds before the plane arrives to finish playing audio
 min_landing_descent_rate: -500   # Helps determine when a plane is landing because of a prolonged descent
-min_takeoff_climb_rate: 500      # Helps determine when a plane is taking off because of prolonged ascent
+min_takeoff_climb_rate: 1500     # Helps determine when a plane is taking off because of prolonged ascent
 expire_old_planes: 120           # number of seconds to wait before removing old planes from the view (dont change)
 ignore_helicopters: True        
 ignore_light_aircraft: True

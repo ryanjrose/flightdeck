@@ -1,24 +1,10 @@
 ###
 # Flight Deck Configuration File
 #
-# You can add your own audio files and your own WLED effects and then reference them below 
-# If effect_duration = 0, the effect will play for the duration of the associated MP3
-#
-# Pre-Built WLED Effects are As Follow:
-# 
-# ID   |   EFFECT DESCRIPTION
-#  1       Candles
-#  2       Landing Strip Lights
-#  3       Breathing Lights (Blue)
-#  4       Alien Glitching
-#  5       Alien Landing
-#  6       Stormy Weather
-#  7       Solid Blue
-#  8       Red Rum
 ###
 tar1090_url: http://localhost/tar1090/data/aircraft.json
 mp3_folder: ./audio/chatter      # Where all the Tower/Pilot chatter mp3 files are stored
-chatter_per_hour: 60              # How many chatters per hour are you targeting
+chatter_per_hour: 3600           # How many chatters per hour are you targeting
 flight_deck_latitude: 32.7178    # Latitude for 1625 Grove St, San Diego, CA 92102
 flight_deck_longitude: -117.128  # Longitude for 1625 Grove St, San Diego, CA 92102
 aircraft_monitoring_radius: 8    # 8 miles radius around the specified location
@@ -31,15 +17,33 @@ max_altitude_feet: 2750          # Maximum altitude of 1500 feet above ground (a
 min_speed_knots: 100             # Minimum speed of 75 knots
 max_speed_knots: 200             # Maximum speed of 290 knots
 start_effects_early: 2           # Starts lightning effects early and lets them sit before playing audio
-finish_audio_before_arrival: 3   # finish audio playback x secomds before plane arrives at flightdeck
-polling_interval: 3              # check for aircraft at this interval in seconds (dont recommend less than 3)
-ignore_helicopters: True         
-ignore_light_aircraft: False
+audio_completion_offset: 10      # the number of seconds before the plane arrives to finish playing audio
+min_landing_descent_rate: -500   # Helps determine when a plane is landing because of a prolonged descent
+min_takeoff_climb_rate: 500      # Helps determine when a plane is taking off because of prolonged ascent
+expire_old_planes: 120           # number of seconds to wait before removing old planes from the view (dont change)
+ignore_helicopters: True        
+ignore_light_aircraft: True
 ignore_small_aircraft: False
 ignore_large_aircraft: False
 ignore_heavy_aircraft: False
 ignore_high_performance_aircraft: False
-debug: Falss
+debug: False
+#######################################################
+### Audio Effects
+#######################################################
+# If effect_duration = 0, effect will play for the duration of MP3
+#
+# Pre-Built WLED Effects are As Follow:
+# ID   |   EFFECT DESCRIPTION
+#  1   |   Candles
+#  2   |   Landing Strip Lights
+#  3   |   Breathing Lights (Blue)
+#  4   |   Alien Glitching
+#  5   |   Alien Landing
+#  6   |   Stormy Weather
+#  7   |   Solid Blue
+#  8   |   Red Rum
+#######################################################
 idle_effects:
     - wled_command: '{"ps": 1}'
       effect_duration: 0

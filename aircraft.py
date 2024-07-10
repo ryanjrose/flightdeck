@@ -18,15 +18,17 @@ class Aircraft:
         self.longitude = data.get("lon", 0)
         self.distance_from_center_miles = self.calculate_distance(config['flight_deck_latitude'], config['flight_deck_longitude'])
         self.altitude_history = deque(maxlen=3)  # Store last 3 altitude samples
+        self.seen_count = 1
         self.is_landing = False
         self.is_takeoff = False
-        self.passed_the_flight_deck = False
         self.radio = Radio(config, logger)  # Each aircraft has its own Radio instance
         self.has_triggered_audio = False  # Flag to track if audio has been triggered
 
         self.logger.info(f"Initialized Aircraft: {self.callsign}")
 
-    def update_data(self, data, chatter_allowed=False):
+    def update_data(self, data):
+        self.seen_count += 1
+        self.vert_rate = data.get("baro_rate", 0)
         self.callsign = data.get("flight", self.callsign)
         self.category = data.get("category", self.category)
         self.track = data.get("track", self.track)
@@ -35,12 +37,10 @@ class Aircraft:
         self.latitude = data.get("lat", self.latitude)
         self.longitude = data.get("lon", self.longitude)
         self.distance_from_center_miles = self.calculate_distance(self.config['flight_deck_latitude'], self.config['flight_deck_longitude'])
-        self.chatter_allowed = chatter_allowed
-        self.passed_the_flight_deck = self.has_passed_the_flight_deck()
         self.update_state()
 
     def update_state(self):
-        self.altitude_history.append(self.altitude)  # Update altitude history
+        self.altitude_history.append(self.vert_rate)  # Update altitude history
         self.is_landing = self.is_landing_from_east()
         self.is_takeoff = self.is_taking_off_from_west()
 
@@ -87,22 +87,43 @@ class Aircraft:
         return along_track_distance
 
     def is_moving_towards_flight_deck(self):
+        # Calculate current distance
+        current_distance = self.calculate_distance(self.config['flight_deck_latitude'], self.config['flight_deck_longitude'])
+
+        # Calculate bearing from aircraft to flight deck
+        flight_deck_bearing = self.calculate_bearing(self.latitude, self.longitude, self.config['flight_deck_latitude'], self.config['flight_deck_longitude'])
+
+        # Calculate angular difference between aircraft track and bearing to flight deck
+        track_to_bearing_diff = abs((self.track - flight_deck_bearing + 360) % 360)
+
+        # Normalize the angular difference to the range [0, 180]
+        if track_to_bearing_diff > 180:
+            track_to_bearing_diff = 360 - track_to_bearing_diff
+
+        # Consider the aircraft moving towards the flight deck if the track is within 90 degrees of the bearing
+        return track_to_bearing_diff <= 90
+
+    def calculate_bearing(self, lat1, lon1, lat2, lon2):
+        """
+        Calculate the bearing from one point to another point.
+        """
+        lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
+        dlon = lon2 - lon1
+        x = sin(dlon) * cos(lat2)
+        y = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dlon)
+        initial_bearing = atan2(x, y)
+        # Convert bearing from radians to degrees and normalize to 0-360
+        bearing = (degrees(initial_bearing) + 360) % 360
+        return bearing
+
+
+    def __is_moving_towards_flight_deck(self):
         current_distance = self.calculate_distance(self.config['flight_deck_latitude'], self.config['flight_deck_longitude'])
         next_latitude = self.latitude + (self.speed * cos(radians(self.track)) / 3600)
         next_longitude = self.longitude + (self.speed * sin(radians(self.track)) / 3600)
         next_distance = self.calculate_distance(next_latitude, next_longitude)
 
         return next_distance > current_distance
-
-    def has_passed_the_flight_deck(self):
-        if self.passed_the_flight_deck == True:
-            return True
-        if self.is_east_of_flight_deck() and self.is_on_west_heading():
-            return True
-        if self.is_west_of_flight_deck() and self.is_on_east_heading():
-            return True
-        else:
-            return False
 
     def is_landing_from_east(self):
         if self.is_landing == True:
@@ -145,18 +166,20 @@ class Aircraft:
     def is_on_east_heading(self):
         return abs(self.track - self.config['aircraft_takeoff_runway']*10) <= self.config['allowed_heading_deviation']
 
+    def is_west_of_flight_deck(self):
+        return self.longitude > self.config['flight_deck_longitude']
+
     def is_descending(self):
         if len(self.altitude_history) < 3:
             return False
-        return all(x > y for x, y in zip(self.altitude_history, list(self.altitude_history)[1:]))
-
-    def is_west_of_flight_deck(self):
-        return self.longitude > self.config['flight_deck_longitude']
+        avg_vert_cal_rate = sum(self.altitude_history) / len(self.altitude_history)
+        return avg_vert_cal_rate <= self.config['min_landing_descent_rate']
 
     def is_ascending(self):
         if len(self.altitude_history) < 3:
             return False
-        return all(x < y for x, y in zip(self.altitude_history, list(self.altitude_history)[1:]))
+        avg_vert_cal_rate = sum(self.altitude_history) / len(self.altitude_history)
+        return avg_vert_cal_rate >= self.config['min_takeoff_climb_rate']
 
     @staticmethod
     def get_shuffled_mp3_list(config):

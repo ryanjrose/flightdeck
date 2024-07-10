@@ -45,7 +45,7 @@ class Tower:
         current_time = time.time()
         elapsed_time = current_time - self.last_chatter_time
         allowed_frequency = 3600 / self.config['chatter_per_hour'] # in seconds
-        self.logger.debug(f"Elapsed time since last chatter: {elapsed_time} seconds")
+        #self.logger.debug(f"Elapsed time since last chatter: {elapsed_time} seconds")
         self.chatter_allowed = (elapsed_time >= allowed_frequency)
         return self.chatter_allowed
 
@@ -101,7 +101,7 @@ class Tower:
             if hex_id not in self.unique_aircraft:
                 self.unique_aircraft[hex_id] = Aircraft(self.config, aircraft_data, self.logger)
             else:
-                self.unique_aircraft[hex_id].update_data(aircraft_data, self.chatter_allowed)
+                self.unique_aircraft[hex_id].update_data(aircraft_data)
 
         # Filter invalid aircraft and aircraft we want to ignore
         nearby_aircraft = [
@@ -129,8 +129,6 @@ class Tower:
             return False
         elif not aircraft.is_in_monitoring_radius():
             return False
-        elif aircraft.passed_the_flight_deck:
-            return False
         else:
             return True
 
@@ -152,7 +150,7 @@ class Tower:
         if self.config['ignore_high_performance_aircraft'] and aircraft.category == 'A6':
             return True
         # Let a plane stay in the stats for 1 min after audio has triggered
-        if aircraft.has_triggered_audio and aircraft.has_triggered_audio + 60 < time.time():
+        if aircraft.has_triggered_audio and aircraft.has_triggered_audio + self.config['expire_old_planes'] < time.time():
             return True
 
         return False
@@ -215,7 +213,7 @@ class Tower:
     def display_header(self, stdscr):
         header_data = [
             "Callsign ", "Category", "ID     ", "Track ", "Altitude", "Speed ", 
-            "Lat   ", "Long  ", "DistToFD", "Passed FD", "TakeOff", "Landing", 
+            "Lat   ", "Long  ", "DistToFD", "XXXXXXXXX", "TakeOff", "Landing", 
             "TrigAudio", "InTrigRad", "SpdInRng", "AltInRng", "MovTowFD"
         ]
         stdscr.addstr(2, 0, " | ".join(header_data))
@@ -234,7 +232,7 @@ class Tower:
             stdscr.addstr(idx, 62, f"{aircraft.latitude:.2f}".center(6))
             stdscr.addstr(idx, 71, f"{aircraft.longitude:.2f}".center(6))
             stdscr.addstr(idx, 80, f"{aircraft.distance_from_center_miles:.1f} mi".center(7))
-            stdscr.addstr(idx, 91, f"{self.checked_box if aircraft.passed_the_flight_deck else self.unchecked_box}".center(9))
+            stdscr.addstr(idx, 91, f"{self.checked_box if False else self.unchecked_box}".center(9))
             stdscr.addstr(idx, 103, f"{self.checked_box if aircraft.is_takeoff else self.unchecked_box}".center(8))
             stdscr.addstr(idx, 113, f"{self.checked_box if aircraft.is_landing else self.unchecked_box}".center(8))
             stdscr.addstr(idx, 123, f"{self.checked_box if aircraft.has_triggered_audio else self.unchecked_box}".center(9))
@@ -247,7 +245,7 @@ class Tower:
         closest_aircraft = min(nearby_aircraft, key=lambda ac: ac.calculate_closest_distance())
         total_action_time = 1  # closest_aircraft.calculate_closest_distance() * 60
 
-        self.logger.debug(f"Processing aircraft: {closest_aircraft.callsign}")
+        #self.logger.debug(f"Processing aircraft: {closest_aircraft.callsign}")
         #self.logger.debug(f"Distance from center: {closest_aircraft.distance_from_center_miles}")
         #self.logger.debug(f"Speed: {closest_aircraft.speed}")
         #self.logger.debug(f"Altitude: {closest_aircraft.altitude}")
@@ -255,23 +253,45 @@ class Tower:
         #self.logger.debug(f"In trigger radius: {closest_aircraft.is_in_trigger_radius()}")
         #self.logger.debug(f"Speed within range: {closest_aircraft.is_speed_within_range()}")
         #self.logger.debug(f"Altitude within range: {closest_aircraft.is_altitude_within_range()}")
-        self.logger.debug(f"Moving towards flight deck: {closest_aircraft.is_moving_towards_flight_deck()}")
-        self.logger.debug(f"Passed flight deck: {closest_aircraft.has_passed_the_flight_deck()}")
+        #self.logger.debug(f"Moving towards flight deck: {closest_aircraft.is_moving_towards_flight_deck()}")
 
-        if self.chatter_allowed and not closest_aircraft.has_triggered_audio and closest_aircraft.is_in_trigger_radius() and closest_aircraft.is_speed_within_range() and closest_aircraft.is_altitude_within_range() and closest_aircraft.is_moving_towards_flight_deck():
-            if mp3_files:
-                closest_aircraft.radio.play_mp3_file(stdscr, closest_aircraft.callsign, mp3_files[0], closest_aircraft.distance_from_center_miles, closest_aircraft.speed)
-                closest_aircraft.has_triggered_audio = time.time()  # Update flag after playing the audio
-                self.last_chatter_time = time.time()  # Update last chatter time for use in chatter frequency calculations
-                self.logger.info(f"Playing MP3 for aircraft: {closest_aircraft.callsign}")
+        
+
+        if not closest_aircraft.has_triggered_audio:
+            self.logger.debug(f"Checking conditions for {closest_aircraft.callsign}")
+            if closest_aircraft.is_in_trigger_radius() and closest_aircraft.is_speed_within_range() and closest_aircraft.is_altitude_within_range() and closest_aircraft.is_moving_towards_flight_deck():
+                if mp3_files:
+                    self.logger.debug(f"Playing MP3 for {closest_aircraft.callsign}")
+                    closest_aircraft.radio.play_mp3_file(stdscr, closest_aircraft.callsign, mp3_files[0], closest_aircraft.distance_from_center_miles, closest_aircraft.speed)
+                    closest_aircraft.has_triggered_audio = time.time()  # Update flag after playing the audio
+                    self.last_chatter_time = time.time()  # Update last chatter time for use in chatter frequency calculations
+                    self.logger.info(f"Playing MP3 for aircraft: {closest_aircraft.callsign}")
+                else:
+                    self.display_message(stdscr, "No MP3 files to play.")
             else:
-                self.display_message(stdscr, "No MP3 files to play.")
-        else:
-            messages = []
-            if not self.chatter_allowed:
-                messages.append(f"{self.format_time(self.can_chatter_when())} until chatter allowed.")
+                messages = []
+                if not self.can_chatter():
+                    messages.append(f"{self.format_time(self.can_chatter_when())} until chatter allowed.")
+                self.display_message(stdscr, "; ".join(messages))
 
-            self.display_message(stdscr, "; ".join(messages))
+
+
+
+        #if not closest_aircraft.has_triggered_audio and closest_aircraft.is_in_trigger_radius() and closest_aircraft.is_speed_within_range() and closest_aircraft.is_altitude_within_range() and closest_aircraft.is_moving_towards_flight_deck():
+        #    if mp3_files:
+        #        if not closest_aircraft.has_triggered_audio:
+        #            closest_aircraft.radio.play_mp3_file(stdscr, closest_aircraft.callsign, mp3_files[0], closest_aircraft.distance_from_center_miles, closest_aircraft.speed)
+        #            closest_aircraft.has_triggered_audio = time.time()  # Update flag after playing the audio
+        #            self.last_chatter_time = time.time()  # Update last chatter time for use in chatter frequency calculations
+        #            self.logger.info(f"Playing MP3 for aircraft: {closest_aircraft.callsign}")
+        #    else:
+        #        self.display_message(stdscr, "No MP3 files to play.")
+        #else:
+        #    messages = []
+        #    if not self.can_chatter():
+        #        messages.append(f"{self.format_time(self.can_chatter_when())} until chatter allowed.")
+        #
+        #    self.display_message(stdscr, "; ".join(messages))
 
     def display_message(self, stdscr, message):
         stdscr.addstr(1, 0, message, curses.color_pair(1))

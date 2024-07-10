@@ -44,6 +44,51 @@ class Radio:
 
     def play_mp3_file(self, stdscr, callsign, mp3_file, distance_to_flight_deck, speed):
         try:
+            mp3_path = os.path.join(self.config.get('mp3_folder'), mp3_file)
+            pygame.mixer.music.load(mp3_path)
+            mp3_duration = MP3(mp3_path).info.length
+        except pygame.error as e:
+            self.logger.error(f"Error loading {mp3_file}: {e}")
+            self.display_message(stdscr, f"Error loading {mp3_file}: {e}")
+            return
+
+        # Calculate the ETA based on the distance and speed
+        if speed >= self.config['min_speed_knots']:
+            eta = distance_to_flight_deck / speed * 3600  # ETA in seconds
+        else:
+            self.logger.error(f"{callsign} speed too slow; won't calculate ETA.")
+            return
+
+        # Calculate play_start_time so that the mp3 finishes when the aircraft is nearest to the flight deck
+        play_start_time = time.time() + (eta - mp3_duration) - self.config['audio_completion_offset']
+
+        self.logger.debug(f"ETA: {eta} seconds")
+        self.logger.debug(f"MP3 Duration: {mp3_duration} seconds")
+        self.logger.debug(f"Audio Completion Offset: {self.config['audio_completion_offset']} seconds")
+        self.logger.debug(f"Play Start Time: {(play_start_time - time.time()):.2f} ({play_start_time})")
+        self.logger.debug(f"Current Time: {time.time()}")
+
+
+        while time.time() < play_start_time:
+            remaining_time = round(play_start_time - time.time(), 2)
+            self.logger.debug(f"{callsign} Waiting to play {mp3_file} in {remaining_time} seconds...")
+            self.display_message(stdscr, f"Waiting to play {mp3_file} for {callsign} in {remaining_time} seconds...")
+            time.sleep(0.5)
+
+        self.display_message(stdscr, f"Playing {mp3_file} for {callsign}")
+        pygame.mixer.music.play()
+
+        effect_command = self.config.get('idle_effects')[0].get('wled_command') or "{'ps': 1}"
+        self.send_command(effect_command)
+
+        while pygame.mixer.music.get_busy():
+            time.sleep(0.1)
+
+        self.display_message(stdscr, f"Finished playing {mp3_file} for {callsign}")
+
+
+    def _play_mp3_file(self, stdscr, callsign, mp3_file, distance_to_flight_deck, speed):
+        try:
             pygame.mixer.music.load(os.path.join(self.config.get('mp3_folder'), mp3_file))
             mp3_duration = MP3(os.path.join(self.config.get('mp3_folder'), mp3_file)).info.length
         except pygame.error as e:
@@ -59,7 +104,7 @@ class Radio:
             return
 
         # Calculate play_start_time so that the mp3 finishes when the aircraft is nearest to the flight deck
-        play_start_time = time.time() + (eta - mp3_duration)
+        play_start_time = time.time() + (eta - mp3_duration) - self.config['audio_completion_offset']
 
         while time.time() < play_start_time:
             remaining_time = round(play_start_time - time.time(), 2)

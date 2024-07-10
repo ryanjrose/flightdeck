@@ -40,7 +40,7 @@ class Radio:
                 else:
                     time.sleep(wled_command['effect_duration'])
             while pygame.mixer.music.get_busy():
-                time.sleep(1)
+                time.sleep(.5)
 
     def play_mp3_file(self, stdscr, callsign, mp3_file, distance_to_flight_deck, speed):
         try:

@@ -8,6 +8,8 @@ def main(stdscr):
         tower.monitor_aircraft_with_descent_and_destination(stdscr)
     except Exception as e:
         logging.error(f"An error occurred: {e}", exc_info=True)
+    finally:
+        curses.curs_set(1)
 
 if __name__ == "__main__":
     curses.wrapper(main)

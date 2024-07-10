@@ -20,12 +20,13 @@ class Aircraft:
         self.altitude_history = deque(maxlen=3)  # Store last 3 altitude samples
         self.is_landing = False
         self.is_takeoff = False
+        self.passed_the_flight_deck = False
         self.radio = Radio(config, logger)  # Each aircraft has its own Radio instance
         self.has_triggered_audio = False  # Flag to track if audio has been triggered
 
         self.logger.info(f"Initialized Aircraft: {self.callsign}")
 
-    def update_data(self, data):
+    def update_data(self, data, chatter_allowed=False):
         self.callsign = data.get("flight", self.callsign)
         self.category = data.get("category", self.category)
         self.track = data.get("track", self.track)
@@ -34,6 +35,8 @@ class Aircraft:
         self.latitude = data.get("lat", self.latitude)
         self.longitude = data.get("lon", self.longitude)
         self.distance_from_center_miles = self.calculate_distance(self.config['flight_deck_latitude'], self.config['flight_deck_longitude'])
+        self.chatter_allowed = chatter_allowed
+        self.passed_the_flight_deck = self.has_passed_the_flight_deck()
         self.update_state()
 
     def update_state(self):
@@ -91,6 +94,16 @@ class Aircraft:
 
         return next_distance > current_distance
 
+    def has_passed_the_flight_deck(self):
+        if self.passed_the_flight_deck == True:
+            return True
+        if self.is_east_of_flight_deck() and self.is_on_west_heading():
+            return True
+        if self.is_west_of_flight_deck() and self.is_on_east_heading():
+            return True
+        else:
+            return False
+
     def is_landing_from_east(self):
         if self.is_landing == True:
             return True
@@ -127,6 +140,10 @@ class Aircraft:
     # function to determine if plane is travelling within 10 degrees of self.config['aircraft_landing_runway']
     def is_on_west_heading(self):
         return abs(self.track - self.config['aircraft_landing_runway']*10) <= self.config['allowed_heading_deviation']
+
+    # function to determine if plane is travelling within 10 degrees of self.config['aircraft_landing_runway']
+    def is_on_east_heading(self):
+        return abs(self.track - self.config['aircraft_takeoff_runway']*10) <= self.config['allowed_heading_deviation']
 
     def is_descending(self):
         if len(self.altitude_history) < 3:

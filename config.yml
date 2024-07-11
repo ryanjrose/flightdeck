@@ -13,17 +13,17 @@ aircraft_landing_runway: 28      # SAN DIEGO Runway 27
 aircraft_takeoff_runway: 10      # SAN DIEGO Runway 09
 allowed_heading_deviation: 10    # Number of +/- degrees to be off from runway heading
 min_altitude_feet: 500           # Minimum altitude of 500 feet above ground
-max_altitude_feet: 2750          # Maximum altitude of 1500 feet above ground (adjust as needed)
+max_altitude_feet: 3550          # Maximum altitude of 1500 feet above ground (adjust as needed)
 min_speed_knots: 100             # Minimum speed of 75 knots
 max_speed_knots: 200             # Maximum speed of 290 knots
 start_effects_early: 2           # Starts lightning effects early and lets them sit before playing audio
-audio_completion_offset: 10      # the number of seconds before the plane arrives to finish playing audio
+audio_completion_offset: 10      # Number of seconds before the plane arrives to finish playing audio
 min_landing_descent_rate: -500   # Helps determine when a plane is landing because of a prolonged descent
 min_takeoff_climb_rate: 1500     # Helps determine when a plane is taking off because of prolonged ascent
-expire_old_planes: 120           # number of seconds to wait before removing old planes from the view (dont change)
+expire_old_planes: 120           # Number of seconds to wait before removing old planes from the view (dont change)
 ignore_helicopters: True        
 ignore_light_aircraft: True
-ignore_small_aircraft: False
+ignore_small_aircraft: True
 ignore_large_aircraft: False
 ignore_heavy_aircraft: False
 ignore_high_performance_aircraft: False

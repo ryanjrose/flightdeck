@@ -1,2 +1,4 @@
-__pychache__/
-backup/
+__pychache__/*
+backup/*
+bin/*
+lib/*

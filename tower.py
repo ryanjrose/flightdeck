@@ -106,8 +106,8 @@ class Tower:
         # Filter invalid aircraft and aircraft we want to ignore
         nearby_aircraft = [
             aircraft for aircraft in self.unique_aircraft.values()
-            if self.valid_aircraft(aircraft)
             and not self.ignore_aircraft(aircraft)
+            if self.valid_aircraft(aircraft)
         ]
 
         return nearby_aircraft
@@ -150,8 +150,8 @@ class Tower:
             return True
         if self.config['ignore_high_performance_aircraft'] and aircraft.category == 'A6':
             return True
-        if time.time() - aircraft.last_seen_in_monitoring_radius > self.config['expire_old_planes']:
-            return True
+        #if time.time() - aircraft.last_seen_in_monitoring_radius > self.config['expire_old_planes']:
+        #    return False
         # Let a plane stay in the stats for 1 min after audio has triggered
         if aircraft.has_triggered_audio and aircraft.has_triggered_audio + self.config['expire_old_planes'] < time.time():
             return True

@@ -2,7 +2,8 @@ import curses
 import pprint
 import logging
 import requests
-from systemd.journal import JournalHandler
+import logging
+import logging.handlers
 import time
 import pygame
 import yaml
@@ -52,16 +53,16 @@ class Tower:
     def setup_logging(self):
         self.logger = logging.getLogger('TowerLogger')
         self.logger.setLevel(logging.DEBUG)
-        
+
         # Create handlers
-        j_handler = JournalHandler()
+        syslog_handler = logging.handlers.SysLogHandler(address='/dev/log')
         
         # Create formatters and add it to handlers
-        j_format = logging.Formatter('%(levelname)s - %(message)s')
-        j_handler.setFormatter(j_format)
+        formatter = logging.Formatter('%(levelname)s - %(message)s')
+        syslog_handler.setFormatter(formatter)
         
         # Add handlers to the logger
-        self.logger.addHandler(j_handler)
+        self.logger.addHandler(syslog_handler)
         self.logger.info("Logging setup complete.")
 
     def load_config(self, config_file):
@@ -106,11 +107,11 @@ class Tower:
         # Filter invalid aircraft and aircraft we want to ignore
         nearby_aircraft = [
             aircraft for aircraft in self.unique_aircraft.values()
-            and not self.ignore_aircraft(aircraft)
-            if self.valid_aircraft(aircraft)
+            if not self.ignore_aircraft(aircraft) and self.valid_aircraft(aircraft)
         ]
 
         return nearby_aircraft
+
 
     # Check if the aircraft is in the monitoring radius
     # and invalidate aircraft with bad ADS-B data

@@ -1,4 +1,7 @@
+*.pyc
 __pychache__/*
 backup/*
 bin/*
 lib/*
+include/*
+share/*

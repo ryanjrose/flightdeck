@@ -1,0 +1,112 @@
+import curses
+import pprint
+import logging
+import requests
+import logging.handlers
+import time
+import pygame
+import yaml
+from aircraft import Aircraft
+from rpi_rf import RFDevice
+from radio import Radio
+
+class Tower:
+    def __init__(self, config_file='config.yml'):
+        self.setup_logging()
+        self.load_config(config_file)
+        self.unique_aircraft = {}
+        self.spinner_chars = ['°','º','¤','ø',',','¸','¸',',','ø','¤','º','°','`']
+        self.arrival_icon = '\u1F6EC'
+        self.depart_icon = '\u1F6EB'
+        self.checked_box = '\u2705'
+        self.unchecked_box = ' ' #'\u2B1B'
+        self.last_chatter_time = time.time()
+        self.chatter_allowed = False
+
+        # Initialize rpi_rf receiver
+        self.rfdevice = RFDevice(17)  # GPIO pin 17
+        self.rfdevice.enable_rx()
+        self.last_code_received = None
+        self.logger.info("RF receiver initialized on GPIO 17.")
+        self.radio = Radio(self.config, self.logger)
+        self.idle_fx_idx = 0  # Initialize the index for idle effects
+
+        # Ensure RF_REMOTE_BTN_A and RF_REMOTE_BTN_B are integers
+        self.config['RF_REMOTE_BTN_A'] = int(self.config.get('RF_REMOTE_BTN_A', 0))
+        self.config['RF_REMOTE_BTN_B'] = int(self.config.get('RF_REMOTE_BTN_B', 0))
+
+    # Function to handle received RF codes
+    def rf_code_received(self):
+        timestamp = None
+        while True:
+            if self.rfdevice.rx_code_timestamp != timestamp:
+                timestamp = self.rfdevice.rx_code_timestamp
+                code = self.rfdevice.rx_code
+                if code == self.config['RF_REMOTE_BTN_A']:
+                    self.logger.warn(f"Button A pressed")
+                    self.radio.send_command(self.config.get('idle_effects')[self.idle_fx_idx].get('wled_command'))  # Send the command
+                    if self.idle_fx_idx < (len(self.config['idle_effects']) - 1):
+                        self.idle_fx_idx += 1
+                    else:
+                        self.idle_fx_idx = 0
+                elif code == self.config['RF_REMOTE_BTN_B']:
+                    self.logger.warn(f"Button B pressed")
+                    self.play_button_pressed_audio(code)
+            time.sleep(0.1)
+
+    def play_button_pressed_audio(self, code):
+        mp3_file = 'button_press.mp3'  # Define your mp3 file for button press
+        stdscr = curses.initscr()  # Initialize curses to pass stdscr
+        try:
+            self.radio.play_mp3_file(stdscr, f"RF Code {code}", mp3_file, 0, 100)  # Using dummy values for distance and speed
+        finally:
+            curses.endwin()  # Make sure to end curses to reset the terminal
+
+    # Function to run in a separate thread for listening to RF codes
+    def start_rf_listener(self):
+        import threading
+        thread = threading.Thread(target=self.rf_code_received)
+        thread.daemon = True
+        thread.start()
+        
+    # Other existing methods ...
+
+    def monitor_aircraft_with_descent_and_destination(self, stdscr):
+        try:
+            self.initialize_pygame()
+            mp3_files = Aircraft.get_shuffled_mp3_list(self.config)
+            spinner_index = 0
+
+            self.setup_curses_screen(stdscr)
+
+            # Start RF listener in a separate thread
+            self.start_rf_listener()
+
+            while True:
+                self.display_message(stdscr, '')
+                try:
+                    self.can_chatter()
+                    nearby_aircraft = self.fetch_aircraft_data()
+
+                    if not nearby_aircraft:
+                        time.sleep(0.1)
+                        continue
+
+                    self.update_curses_display(stdscr, nearby_aircraft, spinner_index)
+                    spinner_index = (spinner_index + 1) % len(self.spinner_chars)
+
+                    if nearby_aircraft:
+                        self.process_closest_aircraft(stdscr, nearby_aircraft, mp3_files)
+
+                    if stdscr.getch() == ord('q'):
+                        break
+
+                except Exception as e:
+                    self.logger.error(f"Error during monitoring loop: {e}")
+                    time.sleep(1)
+
+        except Exception as e:
+            self.logger.error(f"Failed to initialize monitoring: {e}")
+
+    # Other existing methods ...
+

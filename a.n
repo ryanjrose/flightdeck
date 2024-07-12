@@ -13,7 +13,7 @@ class Aircraft:
         self.category = data.get("category", "Unknown")
         self.id = data.get("hex", 'Unknown')
         self.track = self.safe_int(data.get("track", 0))
-        self.altitude = self.safe_int(data.get("alt_baro", 99999))  # Default altitude if 'alt_baro' is missing
+        self.altitude = self.safe_int(data.get("alt_baro", 99999))
         self.speed = self.safe_int(data.get("gs", 0))
         self.latitude = self.safe_float(data.get("lat", 0))
         self.longitude = self.safe_float(data.get("lon", 0))
@@ -70,7 +70,7 @@ class Aircraft:
 
         lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
         dlon = lon2 - lon1
-        dlat = lon2 - lat1
+        dlat = lat2 - lat1
         a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
         c = 2 * asin(sqrt(a))
         r = 3956  # Radius of earth in miles
@@ -174,8 +174,5 @@ class Aircraft:
         return avg_vert_cal_rate >= self.config['min_takeoff_climb_rate']
 
     @staticmethod
-    def get_shuffled_mp3_list(config):
-        mp3_folder = config.get('mp3_folder')
-        mp3_files = [f for f in os.listdir(mp3_folder) if f.endswith('.mp3')]
-        random.shuffle(mp3_files)
-        return mp3_files
+    def get
+

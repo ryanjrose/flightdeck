@@ -47,21 +47,21 @@ debug: False
 #  8   |   Red Rum
 #######################################################
 idle_effects:
-    - wled_command: '{"on": false}'
+    - wled_command: '{"on": false, "transition": 0}'
       effect_duration: 0
-    - wled_command: '{"ps": 1}'
+    - wled_command: '{"ps": 1, "transition": 0}'
       effect_duration: 0
-    - wled_command: '{"ps": 3}'
+    - wled_command: '{"ps": 3, "transition": 0}'
       effect_duration: 0
-    - wled_command: '{"ps": 4}'
+    - wled_command: '{"ps": 4, "transition": 0}'
       effect_duration: 0
-    - wled_command: '{"ps": 5}'
+    - wled_command: '{"ps": 5, "transition": 0}'
       effect_duration: 0
-    - wled_command: '{"ps": 6}'
+    - wled_command: '{"ps": 6, "transition": 0}'
       effect_duration: 0
-    - wled_command: '{"ps": 8}'
+    - wled_command: '{"ps": 8, "transition": 0}'
       effect_duration: 0
-    - wled_command: '{"ps": 7}'
+    - wled_command: '{"ps": 7, "transition": 0}'
       effect_duration: 0
 audio_effects:
   1-suspicious.mp3:

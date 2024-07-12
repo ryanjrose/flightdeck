@@ -2,7 +2,6 @@ import curses
 import pprint
 import logging
 import requests
-import logging
 import logging.handlers
 import time
 import pygame
@@ -32,8 +31,15 @@ class Tower:
         self.last_code_received = None
         self.logger.info("RF receiver initialized on GPIO 17.")
         self.radio = Radio(self.config, self.logger)
+        self.idle_fx_idx = 0
 
-        # Function to handle received RF codes
+        # Ensure RF_REMOTE_BTN_A and RF_REMOTE_BTN_B are integers
+        self.config['RF_REMOTE_BTN_A'] == int(self.config.get('RF_REMOTE_BTN_A',0))
+        self.config['RF_REMOTE_BTN_B'] == int(self.config.get('RF_REMOTE_BTN_B',0))
+
+
+
+    # Function to handle received RF codes
     def rf_code_received(self):
         timestamp = None
         while True:

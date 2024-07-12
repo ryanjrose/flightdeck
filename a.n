@@ -23,22 +23,22 @@ class Aircraft:
         self.is_landing = False
         self.is_takeoff = False
         self.last_seen_in_monitoring_radius = time.time()
-        self.vert_rate = self.safe_int(data.get("baro_rate", 0))
+        self.vert_rate = 0
         self.radio = Radio(config, logger)  # Each aircraft has its own Radio instance
         self.has_triggered_audio = False  # Flag to track if audio has been triggered
 
-        self.logger.info(f"Initialized Aircraft: {self.callsign}")
+        self.logger.info(f"Initialized Aircraft: {self.callsign} (ID: {self.id})")
 
     def update_data(self, data):
         self.seen_count += 1
         self.vert_rate = self.safe_int(data.get("baro_rate", 0))
         self.callsign = data.get("flight", self.callsign)
         self.category = data.get("category", self.category)
-        self.track = self.safe_int(data.get("track", self.track))
-        self.altitude = self.safe_int(data.get("alt_baro", self.altitude))
-        self.speed = self.safe_int(data.get("gs", self.speed))
-        self.latitude = self.safe_float(data.get("lat", self.latitude))
-        self.longitude = self.safe_float(data.get("lon", self.longitude))
+        self.track = self.safe_int(data.get("track", 0))
+        self.altitude = self.safe_int(data.get("alt_baro", 99999))
+        self.speed = self.safe_int(data.get("gs", 0))
+        self.latitude = self.safe_float(data.get("lat", 0))
+        self.longitude = self.safe_float(data.get("lon", 0))
         self.distance_from_center_miles = self.calculate_distance(self.config['flight_deck_latitude'], self.config['flight_deck_longitude'])
         self.update_state()
 

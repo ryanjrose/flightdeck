@@ -43,6 +43,7 @@ class Radio:
                 time.sleep(.5)
 
     def play_mp3_file(self, stdscr, callsign, mp3_file, distance_to_flight_deck, speed):
+        self.logger.warn('in play mp3 file')
         try:
             mp3_path = os.path.join(self.config.get('mp3_folder'), mp3_file)
             pygame.mixer.music.load(mp3_path)
@@ -71,28 +72,31 @@ class Radio:
 
         while time.time() < play_start_time:
             remaining_time = round(play_start_time - time.time(), 2)
-            self.display_message(stdscr, f"{callsign} Waiting to play {mp3_file} in {str(datetime.fromtimestamp(remaining_time).strftime('%Y-%m-%d %H:%M:%S'))} ...")
-            self.logger.debug(f"{callsign} Waiting to play {mp3_file} in {str(datetime.fromtimestamp(remaining_time).strftime('%Y-%m-%d %H:%M:%S'))} ...")
-            time.sleep(0.5)
+            self.display_message(stdscr, f"{callsign} Waiting to play {mp3_file} in {remaining_time:.2f} seconds ...")
+            time.sleep(0.2)
 
         if play_start_time > time.time() + .25:
             return
         self.display_message(stdscr, f"Playing {mp3_file} for {callsign}")
         pygame.mixer.music.play()
 
+        self.logger.debug(f"OMG")
         # for each wled_command in config['audio_effects'][<mp3_file_name>], play each wled_command for the effect_duration
         for wled_command in self.config['audio_effects'][mp3_file]:
+            self.logger.debug(f"GETTING THE JOB DONE")
             self.send_command(wled_command['wled_command'])
             if wled_command['effect_duration'] == 0:
                 while pygame.mixer.music.get_busy():
+                    self.logger.debug("WORLD")
                     time.sleep(1)
             else:
                 time.sleep(wled_command['effect_duration'])
         while pygame.mixer.music.get_busy():
+            self.logger.debug("EUROPE")
             time.sleep(1)
 
         self.display_message(stdscr, f"Finished playing {mp3_file} for {callsign}")
-        effect_command = self.config.get('idle_effects')[0].get('wled_command') or "{'ps': 1}"
+        effect_command = self.config.get('idle_effects')[1].get('wled_command') or "{'ps': 1}"
         self.send_command(effect_command)
 
     def display_message(self, stdscr, message):

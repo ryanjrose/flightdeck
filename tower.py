@@ -8,6 +8,9 @@ import time
 import pygame
 import yaml
 from aircraft import Aircraft
+from rpi_rf import RFDevice
+from radio import Radio
+
 
 class Tower:
     def __init__(self, config_file='config.yml'):
@@ -21,6 +24,50 @@ class Tower:
         self.unchecked_box = ' ' #'\u2B1B'
         self.last_chatter_time = time.time()
         self.chatter_allowed = False
+        self.idle_fx_idx = 0
+
+        # Initialize rpi_rf receiver
+        self.rfdevice = RFDevice(17)  # GPIO pin 17
+        self.rfdevice.enable_rx()
+        self.last_code_received = None
+        self.logger.info("RF receiver initialized on GPIO 17.")
+        self.radio = Radio(self.config, self.logger)
+
+        # Function to handle received RF codes
+    def rf_code_received(self):
+        timestamp = None
+        while True:
+            if self.rfdevice.rx_code_timestamp != timestamp:
+                timestamp = self.rfdevice.rx_code_timestamp
+                code = self.rfdevice.rx_code
+                if code == self.config['RF_REMOTE_BTN_A']:
+                    self.logger.warn(f"Button A pressed")
+                    self.radio.send_command(self.config.get('idle_effects')[self.idle_fx_idx].get('wled_command'))  # Send the command
+                    if self.idle_fx_idx < (len(self.config['idle_effects']) - 1):
+                        self.idle_fx_idx += 1
+                    else:
+                        self.idle_fx_idx = 0
+                elif code == self.config['RF_REMOTE_BTN_B']:
+                    self.logger.warn(f"Button B pressed")
+                    self.play_button_pressed_audio(code)
+            time.sleep(0.1)
+
+    def play_button_pressed_audio(self, code):
+        mp3_file = '2-emergency.mp3'  # Define your mp3 file for button press
+        stdscr = curses.initscr()  # Initialize curses to pass stdscr
+        try:
+            self.radio.play_mp3_file(stdscr, f"RF Code {code}", mp3_file, 0, 100)  # Using dummy values for distance and speed
+        except:
+            self.logger.info('playing an mp3 file didnt work')
+        #finally:
+            #curses.endwin()  # Make sure to end curses to reset the terminal
+
+    # Function to run in a separate thread for listening to RF codes
+    def start_rf_listener(self):
+        import threading
+        thread = threading.Thread(target=self.rf_code_received)
+        thread.daemon = True
+        thread.start()
 
     #function to trun seconds into string format: ##min:ss
     def format_time(self, seconds):
@@ -167,6 +214,9 @@ class Tower:
 
             self.setup_curses_screen(stdscr)
 
+            # Start RF listener in a separate thread
+            self.start_rf_listener()
+
             while True:
                 self.display_message(stdscr, '')
                 try:
@@ -261,7 +311,7 @@ class Tower:
                         f"Actual Landing Hedg: {closest_aircraft.track} ({(self.config['aircraft_landing_runway']*10)-self.config['allowed_heading_deviation']} - {(self.config['aircraft_landing_runway']*10)+self.config['allowed_heading_deviation']}\n" + \
                         f"Speed: {closest_aircraft.speed}" 
 
-        self.logger.debug(debug_messg) 
+        #self.logger.debug(debug_messg) 
         #self.logger.debug(f"Has triggered audio: {closest_aircraft.has_triggered_audio}")
         #self.logger.debug(f"In trigger radius: {closest_aircraft.is_in_trigger_radius()}")
         #self.logger.debug(f"Speed within range: {closest_aircraft.is_speed_within_range()}")
@@ -274,7 +324,7 @@ class Tower:
         if not closest_aircraft.has_triggered_audio:
             self.logger.debug(f"Checking conditions for {closest_aircraft.callsign}")
             if closest_aircraft.is_in_trigger_radius() and closest_aircraft.is_speed_within_range() and closest_aircraft.is_altitude_within_range() and closest_aircraft.is_moving_towards_flight_deck():
-                if mp3_files:
+                if mp3_files and self.can_chatter():
                     self.logger.debug(f"Playing MP3 for {closest_aircraft.callsign}")
                     closest_aircraft.radio.play_mp3_file(stdscr, closest_aircraft.callsign, mp3_files[0], closest_aircraft.distance_from_center_miles, closest_aircraft.speed)
                     closest_aircraft.has_triggered_audio = time.time()  # Update flag after playing the audio

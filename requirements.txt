@@ -2,4 +2,4 @@ mutagen
 requests
 pygame
 pyyaml
-serial
+at requests

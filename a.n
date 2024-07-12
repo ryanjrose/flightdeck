@@ -174,5 +174,9 @@ class Aircraft:
         return avg_vert_cal_rate >= self.config['min_takeoff_climb_rate']
 
     @staticmethod
-    def get
+    def get_shuffled_mp3_list(config):
+        mp3_folder = config.get('mp3_folder')
+        mp3_files = [f for f in os.listdir(mp3_folder) if f.endswith('.mp3')]
+        random.shuffle(mp3_files)
+        return mp3_files
 

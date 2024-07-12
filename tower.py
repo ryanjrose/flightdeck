@@ -1,15 +1,14 @@
 import curses
 import pprint
 import logging
-import requests
 import logging.handlers
+import requests
 import time
 import pygame
 import yaml
-from aircraft import Aircraft
 from rpi_rf import RFDevice
+from aircraft import Aircraft
 from radio import Radio
-
 
 class Tower:
     def __init__(self, config_file='config.yml'):
@@ -23,7 +22,6 @@ class Tower:
         self.unchecked_box = ' ' #'\u2B1B'
         self.last_chatter_time = time.time()
         self.chatter_allowed = False
-        self.idle_fx_idx = 0
 
         # Initialize rpi_rf receiver
         self.rfdevice = RFDevice(17)  # GPIO pin 17
@@ -31,13 +29,74 @@ class Tower:
         self.last_code_received = None
         self.logger.info("RF receiver initialized on GPIO 17.")
         self.radio = Radio(self.config, self.logger)
-        self.idle_fx_idx = 0
+        self.idle_fx_idx = 0  # Initialize the index for idle effects
 
-        # Ensure RF_REMOTE_BTN_A and RF_REMOTE_BTN_B are integers
-        self.config['RF_REMOTE_BTN_A'] == int(self.config.get('RF_REMOTE_BTN_A',0))
-        self.config['RF_REMOTE_BTN_B'] == int(self.config.get('RF_REMOTE_BTN_B',0))
+    def setup_logging(self):
+        self.logger = logging.getLogger('TowerLogger')
+        self.logger.setLevel(logging.CRITICAL)
 
+        # Create handlers
+        syslog_handler = logging.handlers.SysLogHandler(address='/dev/log')
+        
+        # Create formatters and add it to handlers
+        formatter = logging.Formatter('%(levelname)s - %(message)s - %(pathname)s:%(lineno)d')
+        syslog_handler.setFormatter(formatter)
+        
+        # Add handlers to the logger
+        self.logger.addHandler(syslog_handler)
+        self.logger.info("Logging setup complete.")
+        
+    def load_config(self, config_file):
+        try:
+            with open(config_file, 'r') as file:
+                self.config = yaml.safe_load(file)
+                self.logger.info("Configuration loaded successfully.")
+                
+                # Convert relevant configuration values to integers
+                self.config['RF_REMOTE_BTN_A'] = int(self.config.get('RF_REMOTE_BTN_A', 0))
+                self.config['RF_REMOTE_BTN_B'] = int(self.config.get('RF_REMOTE_BTN_B', 0))
+                self.config['min_speed_knots'] = int(self.config.get('min_speed_knots', 0))
+                self.config['max_speed_knots'] = int(self.config.get('max_speed_knots', 0))
+                self.config['min_altitude_feet'] = int(self.config.get('min_altitude_feet', 0))
+                self.config['max_altitude_feet'] = int(self.config.get('max_altitude_feet', 0))
+                self.config['aircraft_monitoring_radius'] = int(self.config.get('aircraft_monitoring_radius', 0))
+                self.config['aircraft_trigger_radius'] = int(self.config.get('aircraft_trigger_radius', 0))
+                self.config['allowed_heading_deviation'] = int(self.config.get('allowed_heading_deviation', 0))
+                self.config['audio_completion_offset'] = int(self.config.get('audio_completion_offset', 0))
+                self.config['min_landing_descent_rate'] = int(self.config.get('min_landing_descent_rate', 0))
+                self.config['min_takeoff_climb_rate'] = int(self.config.get('min_takeoff_climb_rate', 0))
+                self.config['expire_old_planes'] = int(self.config.get('expire_old_planes', 0))
 
+        except FileNotFoundError:
+            self.logger.error(f"Configuration file {config_file} not found.")
+            self.config = {}
+        except yaml.YAMLError as exc:
+            self.logger.error(f"Error parsing configuration file: {exc}")
+            self.config = {}
+
+    def can_chatter(self):
+        current_time = time.time()
+        elapsed_time = current_time - self.last_chatter_time
+        allowed_frequency = 3600 / self.config['chatter_per_hour']  # in seconds
+        self.chatter_allowed = (elapsed_time >= allowed_frequency)
+        return self.chatter_allowed
+
+    def can_chatter_when(self):
+        current_time = time.time()
+        elapsed_time = current_time - self.last_chatter_time  # time since last chatter
+        allowed_frequency = 3600 / self.config['chatter_per_hour']  # in seconds
+
+        when_to_chatter = allowed_frequency - elapsed_time
+        if when_to_chatter <= 0:
+            return 0  # chatter is allowed immediately
+
+        # return seconds until next allowed chatter
+        return when_to_chatter
+
+    def format_time(self, seconds):
+        minutes = seconds // 60
+        seconds = seconds % 60
+        return f"{minutes:.0f}min {seconds:.0f}sec"
 
     # Function to handle received RF codes
     def rf_code_received(self):
@@ -59,14 +118,12 @@ class Tower:
             time.sleep(0.1)
 
     def play_button_pressed_audio(self, code):
-        mp3_file = '2-emergency.mp3'  # Define your mp3 file for button press
+        mp3_file = 'button_press.mp3'  # Define your mp3 file for button press
         stdscr = curses.initscr()  # Initialize curses to pass stdscr
         try:
             self.radio.play_mp3_file(stdscr, f"RF Code {code}", mp3_file, 0, 100)  # Using dummy values for distance and speed
-        except:
-            self.logger.info('playing an mp3 file didnt work')
-        #finally:
-            #curses.endwin()  # Make sure to end curses to reset the terminal
+        finally:
+            curses.endwin()  # Make sure to end curses to reset the terminal
 
     # Function to run in a separate thread for listening to RF codes
     def start_rf_listener(self):
@@ -74,62 +131,7 @@ class Tower:
         thread = threading.Thread(target=self.rf_code_received)
         thread.daemon = True
         thread.start()
-
-    #function to trun seconds into string format: ##min:ss
-    def format_time(self, seconds):
-        minutes = seconds // 60
-        seconds = seconds % 60
-        return f"{minutes:.0f}min {seconds:.0f}sec"
-
-    # Returns seconds until chatter is allowed again based on config
-    def can_chatter_when(self):
-        current_time = time.time()
-        elapsed_time = current_time - self.last_chatter_time # time since last chatter
-        allowed_frequency = 3600 / self.config['chatter_per_hour'] # in seconds
         
-        when_to_chatter = allowed_frequency - elapsed_time
-        if when_to_chatter <= 0:
-            return 0 # chatter is allowed immediately
-
-        # return seconds until next allowed chatter
-        return allowed_frequency - elapsed_time
-
-    # returns True or False if chatter is allowed
-    def can_chatter(self):
-        current_time = time.time()
-        elapsed_time = current_time - self.last_chatter_time
-        allowed_frequency = 3600 / self.config['chatter_per_hour'] # in seconds
-        #self.logger.debug(f"Elapsed time since last chatter: {elapsed_time} seconds")
-        self.chatter_allowed = (elapsed_time >= allowed_frequency)
-        return self.chatter_allowed
-
-    def setup_logging(self):
-        self.logger = logging.getLogger('TowerLogger')
-        self.logger.setLevel(logging.DEBUG)
-
-        # Create handlers
-        syslog_handler = logging.handlers.SysLogHandler(address='/dev/log')
-        
-        # Create formatters and add it to handlers
-        formatter = logging.Formatter('%(levelname)s - %(message)s')
-        syslog_handler.setFormatter(formatter)
-        
-        # Add handlers to the logger
-        self.logger.addHandler(syslog_handler)
-        self.logger.info("Logging setup complete.")
-
-    def load_config(self, config_file):
-        try:
-            with open(config_file, 'r') as file:
-                self.config = yaml.safe_load(file)
-                self.logger.info("Configuration loaded successfully.")
-        except FileNotFoundError:
-            self.logger.error(f"Configuration file {config_file} not found.")
-            self.config = {}
-        except yaml.YAMLError as exc:
-            self.logger.error(f"Error parsing configuration file: {exc}")
-            self.config = {}
-
     # Fetch aircraft from TAR1090 API and process the data
     def fetch_aircraft_data(self):
         url = self.config.get('tar1090_url', '')
@@ -142,7 +144,7 @@ class Tower:
             response.raise_for_status()
             data = response.json()
             aircraft_list = data.get("aircraft", [])
-            #self.logger.info(f"Fetched {len(aircraft_list)} aircraft from {url}.")
+            self.logger.debug(f"Fetched {len(aircraft_list)} aircraft from {url}.")
             return self.process_aircraft_data(aircraft_list)
         except requests.RequestException as e:
             self.logger.error(f"Error fetching aircraft data: {e}")
@@ -153,8 +155,10 @@ class Tower:
         for aircraft_data in aircraft_list:
             hex_id = aircraft_data.get("hex")
             if hex_id not in self.unique_aircraft:
+                self.logger.debug(f"Adding new aircraft: {hex_id}")
                 self.unique_aircraft[hex_id] = Aircraft(self.config, aircraft_data, self.logger)
             else:
+                self.logger.debug(f"Updating aircraft: {hex_id}")
                 self.unique_aircraft[hex_id].update_data(aircraft_data)
 
         # Filter invalid aircraft and aircraft we want to ignore
@@ -163,11 +167,9 @@ class Tower:
             if not self.ignore_aircraft(aircraft) and self.valid_aircraft(aircraft)
         ]
 
+        self.logger.debug(f"Nearby aircraft count: {len(nearby_aircraft)}")
         return nearby_aircraft
 
-
-    # Check if the aircraft is in the monitoring radius
-    # and invalidate aircraft with bad ADS-B data
     def valid_aircraft(self, aircraft):
         if aircraft.altitude == 99999:
             return False
@@ -230,6 +232,7 @@ class Tower:
                     nearby_aircraft = self.fetch_aircraft_data()
 
                     if not nearby_aircraft:
+                        self.logger.debug("No nearby aircraft found.")
                         time.sleep(0.1)
                         continue
 
@@ -317,25 +320,25 @@ class Tower:
                         f"Actual Landing Hedg: {closest_aircraft.track} ({(self.config['aircraft_landing_runway']*10)-self.config['allowed_heading_deviation']} - {(self.config['aircraft_landing_runway']*10)+self.config['allowed_heading_deviation']}\n" + \
                         f"Speed: {closest_aircraft.speed}" 
 
-        #self.logger.debug(debug_messg) 
         #self.logger.debug(f"Has triggered audio: {closest_aircraft.has_triggered_audio}")
         #self.logger.debug(f"In trigger radius: {closest_aircraft.is_in_trigger_radius()}")
         #self.logger.debug(f"Speed within range: {closest_aircraft.is_speed_within_range()}")
         #self.logger.debug(f"Altitude within range: {closest_aircraft.is_altitude_within_range()}")
-        self.logger.debug(f"Moving towards flight deck: {closest_aircraft.is_moving_towards_flight_deck()}")
-        self.logger.warn(f"\n")
-
-        
+        #self.logger.debug(f"Moving towards flight deck: {closest_aircraft.is_moving_towards_flight_deck()}")
+        #self.logger.warn(f"\n")
 
         if not closest_aircraft.has_triggered_audio:
             self.logger.debug(f"Checking conditions for {closest_aircraft.callsign}")
             if closest_aircraft.is_in_trigger_radius() and closest_aircraft.is_speed_within_range() and closest_aircraft.is_altitude_within_range() and closest_aircraft.is_moving_towards_flight_deck():
-                if mp3_files and self.can_chatter():
-                    self.logger.debug(f"Playing MP3 for {closest_aircraft.callsign}")
-                    closest_aircraft.radio.play_mp3_file(stdscr, closest_aircraft.callsign, mp3_files[0], closest_aircraft.distance_from_center_miles, closest_aircraft.speed)
-                    closest_aircraft.has_triggered_audio = time.time()  # Update flag after playing the audio
-                    self.last_chatter_time = time.time()  # Update last chatter time for use in chatter frequency calculations
-                    self.logger.info(f"Playing MP3 for aircraft: {closest_aircraft.callsign}")
+                if mp3_files:
+                    if self.chatter_allowed:
+                        self.logger.debug(f"Playing MP3 for {closest_aircraft.callsign}")
+                        closest_aircraft.radio.play_mp3_file(stdscr, closest_aircraft.callsign, mp3_files[0], closest_aircraft.distance_from_center_miles, closest_aircraft.speed)
+                        closest_aircraft.has_triggered_audio = time.time()  # Update flag after playing the audio
+                        self.last_chatter_time = time.time()  # Update last chatter time for use in chatter frequency calculations
+                        self.logger.info(f"Playing MP3 for aircraft: {closest_aircraft.callsign}")
+                    else:
+                        self.display_message(stdscr, f"{self.format_time(self.can_chatter_when())} until chatter allowed.")
                 else:
                     self.display_message(stdscr, "No MP3 files to play.")
             else:
@@ -343,25 +346,6 @@ class Tower:
                 if not self.can_chatter():
                     messages.append(f"{self.format_time(self.can_chatter_when())} until chatter allowed.")
                 self.display_message(stdscr, "; ".join(messages))
-
-
-
-
-        #if not closest_aircraft.has_triggered_audio and closest_aircraft.is_in_trigger_radius() and closest_aircraft.is_speed_within_range() and closest_aircraft.is_altitude_within_range() and closest_aircraft.is_moving_towards_flight_deck():
-        #    if mp3_files:
-        #        if not closest_aircraft.has_triggered_audio:
-        #            closest_aircraft.radio.play_mp3_file(stdscr, closest_aircraft.callsign, mp3_files[0], closest_aircraft.distance_from_center_miles, closest_aircraft.speed)
-        #            closest_aircraft.has_triggered_audio = time.time()  # Update flag after playing the audio
-        #            self.last_chatter_time = time.time()  # Update last chatter time for use in chatter frequency calculations
-        #            self.logger.info(f"Playing MP3 for aircraft: {closest_aircraft.callsign}")
-        #    else:
-        #        self.display_message(stdscr, "No MP3 files to play.")
-        #else:
-        #    messages = []
-        #    if not self.can_chatter():
-        #        messages.append(f"{self.format_time(self.can_chatter_when())} until chatter allowed.")
-        #
-        #    self.display_message(stdscr, "; ".join(messages))
 
     def display_message(self, stdscr, message):
         stdscr.addstr(1, 0, message, curses.color_pair(1))

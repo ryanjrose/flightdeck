@@ -1,6 +1,7 @@
 import curses
 from tower import Tower
 import logging
+import os, sys
 
 def main(stdscr):
     try:
@@ -8,8 +9,11 @@ def main(stdscr):
         tower.monitor_aircraft_with_descent_and_destination(stdscr)
     except Exception as e:
         logging.error(f"An error occurred: {e}", exc_info=True)
-    finally:
-        curses.curs_set(1)
 
 if __name__ == "__main__":
-    curses.wrapper(main)
+    is_tty = os.isatty(sys.stdin.fileno())
+    if is_tty:
+        curses.wrapper(main)
+    else:
+        main(False)
+

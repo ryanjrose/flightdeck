@@ -12,33 +12,45 @@ class Aircraft:
         self.callsign = data.get("flight", "Unknown")
         self.category = data.get("category", "Unknown")
         self.id = data.get("hex", 'Unknown')
-        self.track = data.get("track", 0)
-        self.altitude = data.get("alt_baro", 99999)
-        self.speed = data.get("gs", 0)
-        self.latitude = data.get("lat", 0)
-        self.longitude = data.get("lon", 0)
+        self.track = self.safe_int(data.get("track", 0))
+        self.altitude = self.safe_int(data.get("alt_baro", 99999))
+        self.speed = self.safe_int(data.get("gs", 0))
+        self.latitude = self.safe_float(data.get("lat", 0))
+        self.longitude = self.safe_float(data.get("lon", 0))
         self.distance_from_center_miles = self.calculate_distance(config['flight_deck_latitude'], config['flight_deck_longitude'])
         self.altitude_history = deque(maxlen=3)  # Store last 3 altitude samples
         self.seen_count = 1
         self.is_landing = False
         self.is_takeoff = False
         self.last_seen_in_monitoring_radius = time.time()
-        self.vert_rate = 0
+        self.vert_rate = self.safe_int(data.get("baro_rate", 0))
         self.radio = Radio(config, logger)  # Each aircraft has its own Radio instance
         self.has_triggered_audio = False  # Flag to track if audio has been triggered
 
         self.logger.info(f"Initialized Aircraft: {self.callsign}")
 
+    def safe_int(self, value, default=0):
+        try:
+            return int(value)
+        except (ValueError, TypeError):
+            return default
+
+    def safe_float(self, value, default=0.0):
+        try:
+            return float(value)
+        except (ValueError, TypeError):
+            return default
+
     def update_data(self, data):
         self.seen_count += 1
-        self.vert_rate = data.get("baro_rate", 0)
+        self.vert_rate = self.safe_int(data.get("baro_rate", 0))
         self.callsign = data.get("flight", self.callsign)
         self.category = data.get("category", self.category)
-        self.track = data.get("track", self.track)
-        self.altitude = data.get("alt_baro", self.altitude)
-        self.speed = data.get("gs", self.speed)
-        self.latitude = data.get("lat", self.latitude)
-        self.longitude = data.get("lon", self.longitude)
+        self.track = self.safe_int(data.get("track", self.track))
+        self.altitude = self.safe_int(data.get("alt_baro", self.altitude))
+        self.speed = self.safe_int(data.get("gs", self.speed))
+        self.latitude = self.safe_float(data.get("lat", self.latitude))
+        self.longitude = self.safe_float(data.get("lon", self.longitude))
         self.distance_from_center_miles = self.calculate_distance(self.config['flight_deck_latitude'], self.config['flight_deck_longitude'])
         self.update_state()
 

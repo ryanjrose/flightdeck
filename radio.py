@@ -43,14 +43,15 @@ class Radio:
                 time.sleep(.5)
 
     def play_mp3_file(self, stdscr, callsign, mp3_file, distance_to_flight_deck, speed):
-        self.logger.warn('in play mp3 file')
+        self.logger.warn(f"Playing {mp3_file} for {callsign}")
         try:
             mp3_path = os.path.join(self.config.get('mp3_folder'), mp3_file)
             pygame.mixer.music.load(mp3_path)
             mp3_duration = MP3(mp3_path).info.length
         except pygame.error as e:
             self.logger.error(f"Error loading {mp3_file}: {e}")
-            self.display_message(stdscr, f"Error loading {mp3_file}: {e}")
+            if isinstance(stdscr, curses.window):
+                self.display_message(stdscr, f"Error loading {mp3_file}: {e}")
             return
 
         # Calculate the ETA based on the distance and speed
@@ -72,12 +73,14 @@ class Radio:
 
         while time.time() < play_start_time:
             remaining_time = round(play_start_time - time.time(), 2)
-            self.display_message(stdscr, f"{callsign} Waiting to play {mp3_file} in {remaining_time:.2f} seconds ...")
+            if isinstance(stdscr, curses.window):
+                self.display_message(stdscr, f"{callsign} Waiting to play {mp3_file} in {remaining_time:.2f} seconds ...")
             time.sleep(0.2)
 
         if play_start_time > time.time() + .25:
             return
-        self.display_message(stdscr, f"Playing {mp3_file} for {callsign}")
+        if isinstance(stdscr, curses.window):
+            self.display_message(stdscr, f"Playing {mp3_file} for {callsign}")
         pygame.mixer.music.play()
 
         self.logger.debug(f"OMG")
@@ -95,11 +98,14 @@ class Radio:
             self.logger.debug("EUROPE")
             time.sleep(1)
 
-        self.display_message(stdscr, f"Finished playing {mp3_file} for {callsign}")
+        if isinstance(stdscr, curses.window):
+            self.display_message(stdscr, f"Finished playing {mp3_file} for {callsign}")
         effect_command = self.config.get('idle_effects')[1].get('wled_command') or "{'ps': 1}"
         self.send_command(effect_command)
 
     def display_message(self, stdscr, message):
+        if not isinstance(stdscr, curses.window):
+            return
         stdscr.addstr(1, 0, message, curses.color_pair(1))
         stdscr.refresh()
 

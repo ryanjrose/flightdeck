@@ -33,8 +33,35 @@ class Tower:
         self.logger.info("RF receiver initialized on GPIO 17.")
         self.radio = Radio(self.config, self.logger)
 
-        # Function to handle received RF codes
+    import time
+
+
     def rf_code_received(self):
+        timestamp = None
+        last_processed_timestamp = 0
+        debounce_time = 0.5  # Debounce time in seconds (200ms)
+        
+        while True:
+            current_time = time.time()
+            if self.rfdevice.rx_code_timestamp != timestamp:
+                timestamp = self.rfdevice.rx_code_timestamp
+                if current_time - last_processed_timestamp > debounce_time:
+                    last_processed_timestamp = current_time
+                    code = self.rfdevice.rx_code
+                    if code == self.config['RF_REMOTE_BTN_A']:
+                        self.logger.warn(f"Button A pressed")
+                        self.radio.send_command(self.config.get('idle_effects')[self.idle_fx_idx].get('wled_command'))  # Send the command
+                        if self.idle_fx_idx < (len(self.config['idle_effects']) - 1):
+                            self.idle_fx_idx += 1
+                        else:
+                            self.idle_fx_idx = 0
+                    elif code == self.config['RF_REMOTE_BTN_B']:
+                        self.logger.warn(f"Button B pressed")
+                        self.play_button_pressed_audio(code)
+            time.sleep(0.1)
+
+    # Function to handle received RF codes
+    def _rf_code_received(self):
         timestamp = None
         while True:
             if self.rfdevice.rx_code_timestamp != timestamp:
@@ -53,15 +80,16 @@ class Tower:
             time.sleep(0.1)
 
     def play_button_pressed_audio(self, code):
+        self.logger.warn("In button press audio method")
         mp3_file = '2-emergency.mp3'  # Define your mp3 file for button press
-        if isinstance(stdscr, curses.window):
-            stdscr = curses.initscr()  # Initialize curses to pass stdscr
+        self.logger.warn("not an instance")
+
         try:
-            self.radio.play_mp3_file(stdscr, f"RF Code {code}", mp3_file, 0, 100)  # Using dummy values for distance and speed
-        except:
-            self.logger.info('playing an mp3 file didnt work')
-        #finally:
-            #curses.endwin()  # Make sure to end curses to reset the terminal
+            self.logger.warn("Play MP3 For button B")
+            play_immediately = True
+            self.radio.play_mp3_file(False, f"RF Code {code}", mp3_file, 0, 100, play_immediately)  # Using dummy values for distance and speed
+        except Exception as e:
+            self.logger.warn(f"playing an mp3 file didnt work: {e}")
 
     # Function to run in a separate thread for listening to RF codes
     def start_rf_listener(self):

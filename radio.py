@@ -28,22 +28,8 @@ class Radio:
             with serial.Serial(esp_port, 115200, timeout=1) as ser:
                 ser.write(command.encode())
 
-    def play_mp3_with_effects(self, stdscr, callsign, mp3_file, distance_to_flight_deck, speed):
-            pygame.mixer.music.load(os.path.join(self.config.get('mp3_folder'), mp3_file))
-            pygame.mixer.music.play()
-            # for each wled_command in config['audio_effects'][<mp3_file_name>], play each wled_command for the effect_duration
-            for wled_command in self.config['audio_effects'][mp3_file]:
-                send_command(wled_command['wled_command'])
-                if wled_command['effect_duration'] == 0:
-                    while pygame.mixer.music.get_busy():
-                        time.sleep(1)
-                else:
-                    time.sleep(wled_command['effect_duration'])
-            while pygame.mixer.music.get_busy():
-                time.sleep(.5)
-
-    def play_mp3_file(self, stdscr, callsign, mp3_file, distance_to_flight_deck, speed):
-        self.logger.warn(f"Playing {mp3_file} for {callsign}")
+    def play_mp3_file(self, stdscr, callsign, mp3_file, distance_to_flight_deck, speed, play_now=False):
+        self.logger.warn(f"About to playing {mp3_file} for {callsign}")
         try:
             mp3_path = os.path.join(self.config.get('mp3_folder'), mp3_file)
             pygame.mixer.music.load(mp3_path)
@@ -62,7 +48,9 @@ class Radio:
             return
 
         # Calculate play_start_time so that the mp3 finishes when the aircraft is nearest to the flight deck
-        play_start_time = time.time() + (eta - mp3_duration) - self.config['audio_completion_offset']
+        play_start_time = time.time()
+        if not play_now:
+            play_start_time = time.time() + (eta - mp3_duration) - self.config['audio_completion_offset']
 
         self.logger.debug(f"ETA: {eta} seconds")
         self.logger.debug(f"MP3 Duration: {mp3_duration} seconds")
@@ -71,13 +59,14 @@ class Radio:
         self.logger.debug(f"Current Time: {time.time()}")
 
 
-        while time.time() < play_start_time:
-            remaining_time = round(play_start_time - time.time(), 2)
-            if isinstance(stdscr, curses.window):
-                self.display_message(stdscr, f"{callsign} Waiting to play {mp3_file} in {remaining_time:.2f} seconds ...")
-            time.sleep(0.2)
+        if not play_now:
+            while time.time() < play_start_time:
+                remaining_time = round(play_start_time - time.time(), 2)
+                if isinstance(stdscr, curses.window):
+                    self.display_message(stdscr, f"{callsign} Waiting to play {mp3_file} in {remaining_time:.2f} seconds ...")
+                time.sleep(0.2)
 
-        if play_start_time > time.time() + .25:
+        if not play_now and play_start_time > time.time() + .25:
             return
         if isinstance(stdscr, curses.window):
             self.display_message(stdscr, f"Playing {mp3_file} for {callsign}")

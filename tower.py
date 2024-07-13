@@ -182,7 +182,7 @@ class Tower:
         elif aircraft.speed == 0:
             return False
         elif not aircraft.is_in_monitoring_radius():
-            self.last_seen_in_monitoring_radius = time.time()
+            self.last_seen = time.time()
             return False
         else:
             return True
@@ -204,8 +204,8 @@ class Tower:
             return True
         if self.config['ignore_high_performance_aircraft'] and aircraft.category == 'A6':
             return True
-        #if time.time() - aircraft.last_seen_in_monitoring_radius > self.config['expire_old_planes']:
-        #    return False
+        if time.time() - aircraft.last_seen > self.config['expire_old_planes']:
+            return True
         # Let a plane stay in the stats for 1 min after audio has triggered
         if aircraft.has_triggered_audio and aircraft.has_triggered_audio + self.config['expire_old_planes'] < time.time():
             return True
@@ -233,11 +233,10 @@ class Tower:
                 try:
                     self.can_chatter()
                     nearby_aircraft = self.fetch_aircraft_data()
-                    self.logger.debug(f"===={len(nearby_aircraft)} aircraft in {self.config['aircraft_monitoring_radius']}=====")
+                    self.logger.debug(f"={len(nearby_aircraft)} aircraft in {self.config['aircraft_monitoring_radius']} mi radius")
 
                     if not nearby_aircraft:
                         time.sleep(0.1)
-                        continue
 
                     if isinstance(stdscr, curses.window):
                         self.update_curses_display(stdscr, nearby_aircraft, spinner_index)
@@ -286,17 +285,16 @@ class Tower:
             "TrigAudio", "InTrigRad", "SpdInRng", "AltInRng", "MovTowFD"
         ]
         stdscr.addstr(2, 0, " | ".join(header_data))
-        self.logger.debug(" | ".join(header_data))
+        self.logger.debug(" | ".join([header_data[0], 'Cat', header_data[8]] + header_data[10:17:1]))
 
     def display_aircraft_data(self, stdscr, nearby_aircraft):
         height, width = stdscr.getmaxyx()
+        debug_msg = ''
         for idx, aircraft in enumerate(nearby_aircraft, start=3):
             if idx >= height - 1:
                 break
             stdscr.addstr(idx, 0, f"{aircraft.callsign:<8}")
-            self.logger.debug(f"{aircraft.callsign:<8}")
             stdscr.addstr(idx, 12, f"{aircraft.category:^8}")
-            self.logger.debug(f"{aircraft.category:^8}")
             stdscr.addstr(idx, 23, f"{aircraft.id:^9}")
             stdscr.addstr(idx, 33, f"{aircraft.track:^6}")
             stdscr.addstr(idx, 42, f"{aircraft.altitude:^8}")
@@ -313,35 +311,23 @@ class Tower:
             stdscr.addstr(idx, 158, f"{self.checked_box if aircraft.is_altitude_within_range() else self.unchecked_box}".center(8))
             stdscr.addstr(idx, 169, f"{self.checked_box if aircraft.is_moving_towards_flight_deck() else self.unchecked_box}".center(8))
 
+            debug_msg = f"{aircraft.callsign:<11} "
+            debug_msg += f"{aircraft.category:^5} "
+            debug_msg += f"{aircraft.distance_from_center_miles:.1f} mi ".center(10)
+            debug_msg += f"{'x' if aircraft.is_takeoff else '-':^9} "
+            debug_msg += f"{'x' if aircraft.is_landing else '-':^9} "
+            debug_msg += f"{'x' if aircraft.has_triggered_audio else '-':^11} "
+            debug_msg += f"{'x' if aircraft.is_in_trigger_radius() else '-':^11} "
+            debug_msg += f"{'x' if aircraft.is_speed_within_range() else '-':^10} "
+            debug_msg += f"{'x' if aircraft.is_altitude_within_range() else '-':^10} "
+            debug_msg += f"{'x' if aircraft.is_moving_towards_flight_deck() else '-':^10}"
+            self.logger.debug(debug_msg)
+
+
+
     def process_closest_aircraft(self, stdscr, nearby_aircraft, mp3_files):
         closest_aircraft = min(nearby_aircraft, key=lambda ac: ac.calculate_closest_distance())
         total_action_time = 1  # closest_aircraft.calculate_closest_distance() * 60
-        
-        debug_msg = f"{self.checked_box if aircraft.is_takeoff else self.unchecked_box}".center(8))
-        self.logger.debug( 113, f"{self.checked_box if aircraft.is_landing else self.unchecked_box}".center(8))
-        self.logger.debug( 123, f"{self.checked_box if aircraft.has_triggered_audio else self.unchecked_box}".center(9))
-        self.logger.debug( 135, f"{self.checked_box if aircraft.is_in_trigger_radius() else self.unchecked_box}".center(9))
-        stdscr.addstr(idx, 147, f"{self.checked_box if aircraft.is_speed_within_range() else self.unchecked_box}".center(8))
-        stdscr.addstr(idx, 158, f"{self.checked_box if aircraft.is_altitude_within_range() else self.unchecked_box}".center(8))
-        stdscr.addstr(idx, 169, f"{self.checked_box if aircraft.is_moving_towards_flight_deck() else self.unchecked_box}".center(8))
-        self.logger.debug(f"Processing aircraft: {closest_aircraft.callsign}")
-        #self.logger.debug(f"Distance from center: {closest_aircraft.distance_from_center_miles}")
-        debug_messg = f"Speed: {closest_aircraft.speed}\n" + \
-                        f"Altitude: {closest_aircraft.altitude} ({self.config['min_altitude_feet']} - {self.config['max_altitude_feet']}\n" + \
-                        f"TAKEOFF: {closest_aircraft.is_takeoff}\n" + \
-                        f"Climb Rate: {closest_aircraft.vert_rate}\n" + \
-                        f"On West Heading: {closest_aircraft.is_on_west_heading()}\n" + \
-                        f"Actual Takeoff Hedg: {closest_aircraft.track} ({(self.config['aircraft_takeoff_runway']*10)-self.config['allowed_heading_deviation']} - {(self.config['aircraft_takeoff_runway']*10)+self.config['allowed_heading_deviation']}\n" + \
-                        f"Actual Landing Hedg: {closest_aircraft.track} ({(self.config['aircraft_landing_runway']*10)-self.config['allowed_heading_deviation']} - {(self.config['aircraft_landing_runway']*10)+self.config['allowed_heading_deviation']}\n" + \
-                        f"Speed: {closest_aircraft.speed}" 
-
-        #self.logger.debug(debug_messg) 
-        #self.logger.debug(f"Has triggered audio: {closest_aircraft.has_triggered_audio}")
-        #self.logger.debug(f"In trigger radius: {closest_aircraft.is_in_trigger_radius()}")
-        #self.logger.debug(f"Speed within range: {closest_aircraft.is_speed_within_range()}")
-        #self.logger.debug(f"Altitude within range: {closest_aircraft.is_altitude_within_range()}")
-        self.logger.debug(f"Moving towards flight deck: {closest_aircraft.is_moving_towards_flight_deck()}")
-
         
 
         if not closest_aircraft.has_triggered_audio:

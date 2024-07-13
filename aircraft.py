@@ -22,7 +22,7 @@ class Aircraft:
         self.seen_count = 1
         self.is_landing = False
         self.is_takeoff = False
-        self.last_seen_in_monitoring_radius = time.time()
+        self.last_seen = time.time()
         self.vert_rate = self.safe_int(data.get("baro_rate", 0))
         self.radio = Radio(config, logger)  # Each aircraft has its own Radio instance
         self.has_triggered_audio = False  # Flag to track if audio has been triggered
@@ -43,6 +43,7 @@ class Aircraft:
 
     def update_data(self, data):
         self.seen_count += 1
+        self.last_seen = time.time()
         self.vert_rate = self.safe_int(data.get("baro_rate", 0))
         self.callsign = data.get("flight", self.callsign)
         self.category = data.get("category", self.category)

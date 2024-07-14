@@ -1,88 +1,270 @@
-Flight Deck Setup
------------------
+# Flight Deck Setup
 
+This document provides detailed instructions for setting up the Flight Deck monitoring and effects script on a Debian Bullseye 32-bit light system. It includes steps for installing necessary software, configuring services to start at boot, setting up a Wi-Fi access point, and installing ADS-B and logging tools.
 
+## Notes
 
-NOTES:
-**must be done on Debian Bullseye 32-bit light
+**Important**: You must be working with Debian Bullseye 32-bit light; otherwise, RPI_RF (RF Support) will not be present.
 
-sudo vim /etc/systemd/journald.conf
-add line: SystemMaxUse=50M
+## Install FlightDeck Monitoring and Effects Script
 
-sudo apt update
-sudo apt install -y git python3-venv vim cmake libusb-1.0-0-dev libsdl2-dev libsdl2-mixer-2.0-0
+1. Clone the repository and set up the virtual environment:
+    ```bash
+    cd ~/
+    git clone https://github.com/ryanjrose/flightdeck
+    python -m venv flightdeck
+    ```
 
+2. Activate the virtual environment and install dependencies:
+    ```bash
+    cd flightdeck
+    source bin/activate
+    pip install -r requirements.txt
+    pip install --upgrade pyserial
+    ```
 
-git clone https://git.osmocom.org/rtl-sdr.git
-cd rtl-sdr/
-mkdir build
-cd build/
-cmake ../ -DINSTALL_UDEV_RULES=ON
-make
-sudo make install
-sudo ldconfig
-cd
-sudo cp ./rtl-sdr/rtl-sdr.rules /etc/udev/rules.d/
-sudo reboot
-rtl_test
-rtl_test -d /dev/rtl-sdr0
-sudo rmmod rtl2832 rtl2832_sdr dvb_usb_rtl28xxu dvb_usb_v2
-rtl_test
+3. Install necessary system packages:
+    ```bash
+    sudo apt update
+    sudo apt install -y git python3-venv vim cmake libusb-1.0-0-dev libsdl2-dev libsdl2-mixer-2.0-0
+    ```
 
----- Install dump1090
-git clone https://github.com/MalcolmRobb/dump1090.git
+## Make FlightDeck Script Start at Bootup
 
-cd dump190
-[Open dump1090.h file]
-Go to line 238 and change to just };
-Go to line 241 and change to struct stModes {
-Go to line 373 and change to just };
-Go to line 374 and paste: extern struct stModes Modes; extern struct stDF tDF;
-[Open dump1090.c file]
-Insert a line below line 31 and paste struct stModes Modes; struct stDF tDF;
-[Open view1090.c file]
-Insert a line below line 31 and paste struct stModes Modes; struct stDF tDF;
-Run make -B
-make
+1. Create a FlightDeck service:
+    ```bash
+    sudo vim /etc/systemd/system/flightdeck.service
+    ```
 
----- Install tar1090 interface
-sudo bash -c "$(wget -O - https://github.com/wiedehopf/adsb-scripts/raw/master/readsb-install.sh)"
-sudo readsb-set-location 32.722890 -117.128100
+2. Add the following lines to the service file:
+    ```ini
+    [Unit]
+    Description=Flight Deck Tiki Effects
+    After=network.target readsb.service
 
+    [Service]
+    User=rrose
+    Group=rrose
+    WorkingDirectory=/home/rrose/flightdeck
+    Environment="PATH=/home/rrose/flightdeck/bin"
+    ExecStart=/bin/bash -c 'source /home/rrose/flightdeck/bin/activate && python main.py'
+    Restart=always
 
+    [Install]
+    WantedBy=multi-user.target
+    ```
 
-#### Run Commands
-cd ~/
-git clone https://github.com/ryanjrose/flightdeck
-python -m venv flightdeck  # make the virtualenv
+3. Enable and reload the service:
+    ```bash
+    sudo systemctl enable flightdeck.service
+    sudo systemctl daemon-reload
+    ```
 
-cd flightdeck
-source bin/activate
-pip install -r requirements.txt
-pip install --upgrade pyserial
+## Setup Flight Deck AP
 
+1. Update and upgrade the system:
+    ```bash
+    sudo apt update
+    sudo apt upgrade
+    ```
 
+2. Install `dnsmasq` and `hostapd`:
+    ```bash
+    sudo apt install dnsmasq hostapd
+    ```
 
-## Customize Range Rings
-sudo vim /usr/local/share/tar1090/html/config.js
-SiteCirclesDistances = new Array(5,8);
-SiteCirclesColors = ['#FFFF88','#FFFF88'];
+3. Configure the DHCP and DNS services:
+    ```bash
+    sudo vim /etc/dhcpcd.conf
+    ```
 
-## Remove Block modules
-sudo vim /etc/modprobe.d/blacklist-rtlsdr.conf
+4. Add the following lines at the end of the file:
+    ```
+    interface wlan0
+    static ip_address=192.168.4.1/24
+    nohook wpa_supplicant
+    ```
 
-*Note: Add the following lines:
-blacklist dvb_core
-blacklist rtl2832_sdr 
-blacklist dvb_usb_rtl28xxu
+5. Backup and create a new configuration for `dnsmasq`:
+    ```bash
+    sudo mv /etc/dnsmasq.conf /etc/dnsmasq.conf.orig
+    sudo vim /etc/dnsmasq.conf
+    ```
 
-install dvb_core /bin/false
-install rtl2832_sdr /bin/false
-install dvb_usb_rtl28xxu /bin/false
+6. Add the following lines to the new `dnsmasq.conf` file:
+    ```
+    interface=wlan0
+    dhcp-range=192.168.4.2,192.168.4.20,255.255.255.0,24h
+    ```
 
-sudo modprobe -r rtl2832_sdr
-sudo modprobe -r dvb_usb_rtl28xxu
-sudo depmod -a
-sudo update-initramfs -u
+7. Configure `hostapd`:
+    ```bash
+    sudo vim /etc/hostapd/hostapd.conf
+    ```
 
+8. Add the following lines:
+    ```
+    interface=wlan0
+    driver=nl80211
+    ssid=TheFlightDeck
+    hw_mode=g
+    channel=7
+    wmm_enabled=0
+    macaddr_acl=0
+    auth_algs=1
+    ignore_broadcast_ssid=0
+    wpa=2
+    wpa_passphrase=flightdeck
+    wpa_key_mgmt=WPA-PSK
+    wpa_pairwise=TKIP
+    rsn_pairwise=CCMP
+    ```
 
+9. Update `hostapd` default configuration:
+    ```bash
+    sudo vim /etc/default/hostapd
+    ```
+
+10. Replace the line starting with `#DAEMON_CONF` with:
+    ```
+    DAEMON_CONF="/etc/hostapd/hostapd.conf"
+    ```
+
+11. Enable IP forwarding:
+    ```bash
+    sudo vim /etc/sysctl.conf
+    ```
+
+12. Uncomment the following line:
+    ```
+    net.ipv4.ip_forward=1
+    ```
+
+13. Configure `iptables`:
+    ```bash
+    sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+    sudo sh -c "iptables-save > /etc/iptables.ipv4.nat"
+    ```
+
+14. Update `rc.local`:
+    ```bash
+    sudo vim /etc/rc.local
+    ```
+
+15. Add the following lines above `exit 0`:
+    ```
+    iptables-restore < /etc/iptables.ipv4.nat
+    /usr/local/bin/start_network.sh
+    ```
+
+16. Copy and set permissions for `start_network.sh`:
+    ```bash
+    cp ~/flightdeck/support_scripts/start_network.sh /usr/local/bin/start_network.sh
+    sudo chmod +x /usr/local/bin/start_network.sh
+    ```
+
+17. Enable services to start on boot:
+    ```bash
+    sudo systemctl enable dnsmasq
+    sudo systemctl enable hostapd
+    ```
+
+## Setup READSB & tar1090
+
+1. Install the RTL_SDR library:
+    ```bash
+    git clone https://git.osmocom.org/rtl-sdr.git
+    cd rtl-sdr/
+    mkdir build
+    cd build/
+    cmake ../ -DINSTALL_UDEV_RULES=ON
+    make
+    sudo make install
+    sudo ldconfig
+    cd
+    sudo cp ./rtl-sdr/rtl-sdr.rules /etc/udev/rules.d/
+    sudo reboot
+    rtl_test
+    rtl_test -d /dev/rtl-sdr0
+    sudo rmmod rtl2832 rtl2832_sdr dvb_usb_rtl28xxu dvb_usb_v2
+    rtl_test
+    ```
+
+2. Remove and block conflicting modules:
+    ```bash
+    sudo vim /etc/modprobe.d/blacklist-rtlsdr.conf
+    ```
+
+3. Add the following lines:
+    ```
+    blacklist dvb_core
+    blacklist rtl2832_sdr 
+    blacklist dvb_usb_rtl28xxu
+    ```
+
+4. Run these commands from the shell:
+    ```bash
+    install dvb_core /bin/false
+    install rtl2832_sdr /bin/false
+    install dvb_usb_rtl28xxu /bin/false
+    sudo modprobe -r rtl2832_sdr
+    sudo modprobe -r dvb_usb_rtl28xxu
+    sudo depmod -a
+    sudo update-initramfs -u
+    ```
+
+5. Install tar1090 interface:
+    ```bash
+    sudo bash -c "$(wget -O - https://github.com/wiedehopf/adsb-scripts/raw/master/readsb-install.sh)"
+    sudo readsb-set-location 32.722890 -117.128100
+    ```
+
+6. Customize range rings:
+    ```bash
+    sudo vim /usr/local/share/tar1090/html/config.js
+    ```
+
+7. Add the following lines:
+    ```
+    SiteCirclesDistances = new Array(5,8);
+    SiteCirclesColors = ['#FFFF88','#FFFF88'];
+    ```
+
+8. Install dump1090:
+    ```bash
+    git clone https://github.com/MalcolmRobb/dump1090.git
+    cd dump1090
+    ```
+
+9. Modify source files:
+    - Open `dump1090.h` file and make the following changes:
+        - Line 238: change to `};`
+        - Line 241: change to `struct stModes {`
+        - Line 373: change to `};`
+        - Line 374: paste: `extern struct stModes Modes; extern struct stDF tDF;`
+    - Open `dump1090.c` file:
+        - Insert a line below line 31 and paste: `struct stModes Modes; struct stDF tDF;`
+    - Open `view1090.c` file:
+        - Insert a line below line 31 and paste: `struct stModes Modes; struct stDF tDF;`
+
+10. Build dump1090:
+    ```bash
+    make -B
+    make
+    ```
+
+## Setup Logging
+
+1. Configure system logging:
+    ```bash
+    sudo vim /etc/systemd/journald.conf
+    ```
+
+2. Add the following line:
+    ```
+    SystemMaxUse=50M
+    ```
+
+---
+
+This README provides step-by-step instructions to set up the Flight Deck environment, ensuring a smooth installation and configuration process for monitoring and effects scripts on a Raspberry Pi running Debian Bullseye.

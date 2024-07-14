@@ -1,0 +1,88 @@
+Flight Deck Setup
+-----------------
+
+
+
+NOTES:
+**must be done on Debian Bullseye 32-bit light
+
+sudo vim /etc/systemd/journald.conf
+add line: SystemMaxUse=50M
+
+sudo apt update
+sudo apt install -y git python3-venv vim cmake libusb-1.0-0-dev libsdl2-dev libsdl2-mixer-2.0-0
+
+
+git clone https://git.osmocom.org/rtl-sdr.git
+cd rtl-sdr/
+mkdir build
+cd build/
+cmake ../ -DINSTALL_UDEV_RULES=ON
+make
+sudo make install
+sudo ldconfig
+cd
+sudo cp ./rtl-sdr/rtl-sdr.rules /etc/udev/rules.d/
+sudo reboot
+rtl_test
+rtl_test -d /dev/rtl-sdr0
+sudo rmmod rtl2832 rtl2832_sdr dvb_usb_rtl28xxu dvb_usb_v2
+rtl_test
+
+---- Install dump1090
+git clone https://github.com/MalcolmRobb/dump1090.git
+
+cd dump190
+[Open dump1090.h file]
+Go to line 238 and change to just };
+Go to line 241 and change to struct stModes {
+Go to line 373 and change to just };
+Go to line 374 and paste: extern struct stModes Modes; extern struct stDF tDF;
+[Open dump1090.c file]
+Insert a line below line 31 and paste struct stModes Modes; struct stDF tDF;
+[Open view1090.c file]
+Insert a line below line 31 and paste struct stModes Modes; struct stDF tDF;
+Run make -B
+make
+
+---- Install tar1090 interface
+sudo bash -c "$(wget -O - https://github.com/wiedehopf/adsb-scripts/raw/master/readsb-install.sh)"
+sudo readsb-set-location 32.722890 -117.128100
+
+
+
+#### Run Commands
+cd ~/
+git clone https://github.com/ryanjrose/flightdeck
+python -m venv flightdeck  # make the virtualenv
+
+cd flightdeck
+source bin/activate
+pip install -r requirements.txt
+pip install --upgrade pyserial
+
+
+
+## Customize Range Rings
+sudo vim /usr/local/share/tar1090/html/config.js
+SiteCirclesDistances = new Array(5,8);
+SiteCirclesColors = ['#FFFF88','#FFFF88'];
+
+## Remove Block modules
+sudo vim /etc/modprobe.d/blacklist-rtlsdr.conf
+
+*Note: Add the following lines:
+blacklist dvb_core
+blacklist rtl2832_sdr 
+blacklist dvb_usb_rtl28xxu
+
+install dvb_core /bin/false
+install rtl2832_sdr /bin/false
+install dvb_usb_rtl28xxu /bin/false
+
+sudo modprobe -r rtl2832_sdr
+sudo modprobe -r dvb_usb_rtl28xxu
+sudo depmod -a
+sudo update-initramfs -u
+
+

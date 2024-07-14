@@ -36,7 +36,7 @@ class Radio:
             mp3_duration = MP3(mp3_path).info.length
         except pygame.error as e:
             self.logger.error(f"Error loading {mp3_file}: {e}")
-            if isinstance(stdscr, curses.window):
+            if stdscr:
                 self.display_message(stdscr, f"Error loading {mp3_file}: {e}")
             return
 
@@ -62,13 +62,13 @@ class Radio:
         if not play_now:
             while time.time() < play_start_time:
                 remaining_time = round(play_start_time - time.time(), 2)
-                if isinstance(stdscr, curses.window):
+                if stdscr:
                     self.display_message(stdscr, f"{callsign} Waiting to play {mp3_file} in {remaining_time:.2f} seconds ...")
                 time.sleep(0.2)
 
         if not play_now and play_start_time > time.time() + .25:
             return
-        if isinstance(stdscr, curses.window):
+        if stdscr:
             self.display_message(stdscr, f"Playing {mp3_file} for {callsign}")
         pygame.mixer.music.play()
 
@@ -87,13 +87,13 @@ class Radio:
             self.logger.debug("EUROPE")
             time.sleep(1)
 
-        if isinstance(stdscr, curses.window):
+        if stdscr:
             self.display_message(stdscr, f"Finished playing {mp3_file} for {callsign}")
         effect_command = self.config.get('idle_effects')[1].get('wled_command') or "{'ps': 1}"
         self.send_command(effect_command)
 
     def display_message(self, stdscr, message):
-        if not isinstance(stdscr, curses.window):
+        if not stdscr:
             return
         stdscr.addstr(1, 0, message, curses.color_pair(1))
         stdscr.refresh()

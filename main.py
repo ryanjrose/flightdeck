@@ -1,7 +1,8 @@
 import curses
 from tower import Tower
 import logging
-import os, sys
+import os
+import sys
 
 def main(stdscr):
     try:
@@ -12,8 +13,8 @@ def main(stdscr):
 
 if __name__ == "__main__":
     is_tty = os.isatty(sys.stdin.fileno())
+
     if is_tty:
         curses.wrapper(main)
     else:
         main(False)
-

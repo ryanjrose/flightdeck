@@ -23,10 +23,10 @@ expire_old_planes: 120           # Number of seconds to wait before removing old
 RF_REMOTE_BTN_A: 8059905         # Unique code for RF remote button
 RF_REMOTE_BTN_B: 8059906         # Unique code for RF remote button
 ignore_helicopters: True        
-ignore_light_aircraft: False
+ignore_light_aircraft: True
 ignore_small_aircraft: False
 ignore_large_aircraft: False
-ignore_heavy_aircraft: False
+ignore_heavy_aircraft: True
 ignore_high_performance_aircraft: False
 debug: False
 #######################################################

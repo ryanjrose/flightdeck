@@ -32,8 +32,8 @@ class Tower:
         self.last_code_received = None
         self.logger.info("RF receiver initialized on GPIO 17.")
         self.radio = Radio(self.config, self.logger)
-
-    import time
+        # Start RF listener in a separate thread
+        self.start_rf_listener()
 
 
     def rf_code_received(self):
@@ -60,24 +60,6 @@ class Tower:
                         self.play_button_pressed_audio(code)
             time.sleep(0.1)
 
-    # Function to handle received RF codes
-    def _rf_code_received(self):
-        timestamp = None
-        while True:
-            if self.rfdevice.rx_code_timestamp != timestamp:
-                timestamp = self.rfdevice.rx_code_timestamp
-                code = self.rfdevice.rx_code
-                if code == self.config['RF_REMOTE_BTN_A']:
-                    self.logger.warn(f"Button A pressed")
-                    self.radio.send_command(self.config.get('idle_effects')[self.idle_fx_idx].get('wled_command'))  # Send the command
-                    if self.idle_fx_idx < (len(self.config['idle_effects']) - 1):
-                        self.idle_fx_idx += 1
-                    else:
-                        self.idle_fx_idx = 0
-                elif code == self.config['RF_REMOTE_BTN_B']:
-                    self.logger.warn(f"Button B pressed")
-                    self.play_button_pressed_audio(code)
-            time.sleep(0.1)
 
     def play_button_pressed_audio(self, code):
         self.logger.warn("In button press audio method")
@@ -240,22 +222,21 @@ class Tower:
 
         return False
 
-    def monitor_aircraft_with_descent_and_destination(self, stdscr):
+    def monitor_aircraft_with_descent_and_destination(self, stdscr=None):
         try:
             self.initialize_pygame()
             mp3_files = Aircraft.get_shuffled_mp3_list(self.config)
             spinner_index = 0
 
-            if isinstance(stdscr, curses.window):
+            if stdscr:
                 self.setup_curses_screen(stdscr)
             else:
                 self.logger.debug('=======NO TTY ATTACHED=======')
 
-            # Start RF listener in a separate thread
-            self.start_rf_listener()
 
             while True:
-                if isinstance(stdscr, curses.window):
+                time.sleep(.1)
+                if stdscr:
                     self.display_message(stdscr, '')
 
                 try:
@@ -266,14 +247,14 @@ class Tower:
                     if not nearby_aircraft:
                         time.sleep(0.1)
 
-                    if isinstance(stdscr, curses.window):
+                    if stdscr:
                         self.update_curses_display(stdscr, nearby_aircraft, spinner_index)
                         spinner_index = (spinner_index + 1) % len(self.spinner_chars)
 
                     if nearby_aircraft:
                         self.process_closest_aircraft(stdscr, nearby_aircraft, mp3_files)
 
-                    if isinstance(stdscr, curses.window):
+                    if stdscr:
                         if stdscr.getch() == ord('q'):
                             break
 
@@ -368,13 +349,13 @@ class Tower:
                     self.last_chatter_time = time.time()  # Update last chatter time for use in chatter frequency calculations
                     self.logger.info(f"Playing MP3 for aircraft: {closest_aircraft.callsign}")
                 else:
-                    if isinstance(stdscr, curses.window):
+                    if stdscr:
                         self.display_message(stdscr, "No MP3 files to play.")
             else:
                 messages = []
                 if not self.can_chatter():
                     messages.append(f"{self.format_time(self.can_chatter_when())} until chatter allowed.")
-                if isinstance(stdscr, curses.window):
+                if stdscr:
                     self.display_message(stdscr, "; ".join(messages))
 
     def display_message(self, stdscr, message):

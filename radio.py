@@ -89,6 +89,8 @@ class Radio:
 
         if stdscr:
             self.display_message(stdscr, f"Finished playing {mp3_file} for {callsign}")
+        time.sleep(self.config['keep_runway_lit'])
+        self.logger.debug('Turning on Idle Effects')
         effect_command = self.config.get('idle_effects')[1].get('wled_command') or "{'ps': 1}"
         self.send_command(effect_command)
 

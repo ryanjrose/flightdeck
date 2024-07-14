@@ -3,7 +3,7 @@
 ######################################################
 tar1090_url: http://localhost/tar1090/data/aircraft.json
 mp3_folder: ./audio/chatter      # Where all the Tower/Pilot chatter mp3 files are stored
-chatter_per_hour: 3600          # How many chatters per hour are you targeting
+chatter_per_hour: 1              # How many chatters per hour are you targeting
 flight_deck_latitude: 32.7178    # Latitude for 1625 Grove St, San Diego, CA 92102
 flight_deck_longitude: -117.128  # Longitude for 1625 Grove St, San Diego, CA 92102
 aircraft_monitoring_radius: 8    # 8 miles radius around the specified location
@@ -15,8 +15,9 @@ min_altitude_feet: 500           # Minimum altitude of 500 feet above ground
 max_altitude_feet: 3550          # Maximum altitude of 1500 feet above ground (adjust as needed)
 min_speed_knots: 100             # Minimum speed of 75 knots
 max_speed_knots: 200             # Maximum speed of 290 knots
-start_effects_early: 2           # Starts lightning effects early and lets them sit before playing audio
-audio_completion_offset: 10      # Number of seconds before the plane arrives to finish playing audio
+start_effects_early: 10          # Starts lightning effects early and lets them sit before playing audio
+keep_runway_lit: 10              # How long to keep the runway patter lit after chatter stops
+audio_completion_offset: 15      # Number of seconds before the plane arrives to finish playing audio
 min_landing_descent_rate: -500   # Helps determine when a plane is landing because of a prolonged descent
 min_takeoff_climb_rate: 1500     # Helps determine when a plane is taking off because of prolonged ascent
 expire_old_planes: 120           # Number of seconds to wait before removing old planes from the view (dont change)

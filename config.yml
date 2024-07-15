@@ -63,6 +63,10 @@ idle_effects:
       effect_duration: 0
     - wled_command: '{"ps": 7, "transition": 0}'
       effect_duration: 0
+button_b_effect:
+  FlightDeckCocktail.mp3:
+    - wled_command: '{"ps": 2}'
+      effect_duration: 0 
 audio_effects:
   1-suspicious.mp3:
     - wled_command: '{"ps": 2}'

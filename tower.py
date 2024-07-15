@@ -35,6 +35,8 @@ class Tower:
         # Start RF listener in a separate thread
         self.start_rf_listener()
 
+        # Start Idle Candles
+        self.radio.send_command('{"ps": 1}')
 
     def rf_code_received(self):
         timestamp = None
@@ -57,11 +59,11 @@ class Tower:
                             self.idle_fx_idx = 0
                     elif code == self.config['RF_REMOTE_BTN_B']:
                         self.logger.warn(f"Button B pressed")
-                        self.play_button_pressed_audio(code)
+                        self.play_button_b_effect()
             time.sleep(0.1)
 
 
-    def play_button_pressed_audio(self, code):
+    def play_button_b_effect(self):
         self.logger.warn("In button press audio method")
         mp3_file = '2-emergency.mp3'  # Define your mp3 file for button press
         self.logger.warn("not an instance")
@@ -69,7 +71,7 @@ class Tower:
         try:
             self.logger.warn("Play MP3 For button B")
             play_immediately = True
-            self.radio.play_mp3_file(False, f"RF Code {code}", mp3_file, 0, 100, play_immediately)  # Using dummy values for distance and speed
+            self.radio.play_button_b() 
         except Exception as e:
             self.logger.warn(f"playing an mp3 file didnt work: {e}")
 
@@ -354,6 +356,7 @@ class Tower:
             else:
                 messages = []
                 if not self.can_chatter():
+                    self.logger.debug(f"{self.format_time(self.can_chatter_when())} until chatter allowed.")
                     messages.append(f"{self.format_time(self.can_chatter_when())} until chatter allowed.")
                 if stdscr:
                     self.display_message(stdscr, "; ".join(messages))

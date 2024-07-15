@@ -10,13 +10,18 @@ class Radio:
     def __init__(self, config, logger):
         self.config = config
         self.logger = logger
+        self.esp_port = None
 
     def find_esp_port(self):
+        if self.esp_port is not None:
+            return self.esp_port
+
         ports = glob.glob('/dev/ttyUSB*')
         for port in ports:
             try:
                 with serial.Serial(port) as ser:
                     if ser.is_open:
+                        self.esp_port = port
                         return port
             except (OSError, serial.SerialException):
                 pass
@@ -27,6 +32,59 @@ class Radio:
         if esp_port:
             with serial.Serial(esp_port, 115200, timeout=1) as ser:
                 ser.write(command.encode())
+
+    def play_button_b(self):
+        self.logger.warn(f"Playing BUTTON B Special Effect")
+        
+        mp3_file = list(self.config.get('button_b_effect').keys())[0]
+        try:
+            mp3_path = os.path.join(self.config.get('mp3_folder'), mp3_file)
+            pygame.mixer.music.load(mp3_path)
+        except pygame.error as e:
+            self.logger.error(f"Error loading {mp3_file}: {e}")
+            return
+        
+        pygame.mixer.music.play()
+        self.logger.info(f"Started playing {mp3_file}")
+
+        for wled_command in self.config['button_b_effect'][mp3_file]:
+            self.send_command(wled_command['wled_command'])
+            self.logger.info(f"Sent command: {wled_command['wled_command']}")
+            
+            if wled_command['effect_duration'] == 0:
+                self.logger.info("Waiting for music to finish playing...")
+                while pygame.mixer.music.get_busy():
+                    time.sleep(1)
+                    self.logger.info(f"WAITING FOR SPECIAL MUSIC TO END")
+            else:
+                self.logger.info(f"Sleeping for {wled_command['effect_duration']} seconds")
+                time.sleep(wled_command['effect_duration'])
+        self.logger.info(f"SENDING IDLE COMMAND")
+        self.send_command('{"ps": 1}')
+
+
+    def _play_button_b(self):
+        self.logger.warn(f"Playing BUTTON B Special Effect")
+        mp3_file = list(self.config.get('button_b_effect').keys())[0]
+        try:
+            mp3_path = os.path.join(self.config.get('mp3_folder'), mp3_file )
+            pygame.mixer.music.load(mp3_path)
+        except pygame.error as e:
+            self.logger.error(f"Error loading {mp3_file}: {e}")
+            return
+        pygame.mixer.music.play()
+
+        for wled_command in self.config['button_b_effect'][mp3_file]:
+            self.send_command(wled_command['wled_command'])
+            if wled_command['effect_duration'] == 0:
+                while pygame.mixer.music.get_busy():
+                    time.sleep(1)
+            else:
+                time.sleep(wled_command['effect_duration'])
+
+        self.logger.warn('BUtton B Effect Over. Now going to idle mode')
+        effect_command = self.config.get('idle_effects')[1].get('wled_command') or "{'ps': 1}"
+        self.send_command(effect_command)
 
     def play_mp3_file(self, stdscr, callsign, mp3_file, distance_to_flight_deck, speed, play_now=False):
         self.logger.warn(f"About to playing {mp3_file} for {callsign}")

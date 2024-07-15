@@ -33,7 +33,7 @@ class Radio:
             with serial.Serial(esp_port, 115200, timeout=1) as ser:
                 ser.write(command.encode())
 
-    def play_button_b(self):
+    def _play_button_b(self):
         self.logger.warn(f"Playing BUTTON B Special Effect")
         
         mp3_file = list(self.config.get('button_b_effect').keys())[0]
@@ -55,15 +55,13 @@ class Radio:
                 self.logger.info("Waiting for music to finish playing...")
                 while pygame.mixer.music.get_busy():
                     time.sleep(1)
-                    self.logger.info(f"WAITING FOR SPECIAL MUSIC TO END")
             else:
                 self.logger.info(f"Sleeping for {wled_command['effect_duration']} seconds")
                 time.sleep(wled_command['effect_duration'])
-        self.logger.info(f"SENDING IDLE COMMAND")
         self.send_command('{"ps": 1}')
 
 
-    def _play_button_b(self):
+    def play_button_b(self):
         self.logger.warn(f"Playing BUTTON B Special Effect")
         mp3_file = list(self.config.get('button_b_effect').keys())[0]
         try:
@@ -85,6 +83,26 @@ class Radio:
         self.logger.warn('BUtton B Effect Over. Now going to idle mode')
         effect_command = self.config.get('idle_effects')[1].get('wled_command') or "{'ps': 1}"
         self.send_command(effect_command)
+
+    def light_runway(self, callsign, distance_to_flight_deck, speed):
+        # Calculate the ETA based on the distance and speed
+        if speed >= self.config['min_speed_knots']:
+            eta = distance_to_flight_deck / speed * 3600  # ETA in seconds
+        else:
+            self.logger.error(f"{callsign} speed too slow; won't calculate ETA.")
+            return
+
+        light_start_time = time.time() + (eta - self.config['start_effects_early'])
+        light_duration = self.config['start_effects_early'] + self.config['keep_runway_lit']
+        self.logger.debug(f"{callsign} Lighting Runway for {light_duration} seconds.")
+        effect_command = "{'ps': 2}"
+        self.send_command(effect_command)
+        while light_duration > 0:
+            time.sleep(1)
+            light_duration -= 1
+        effect_command = self.config.get('idle_effects')[1].get('wled_command') or "{'ps': 1}"
+        self.send_command(effect_command)
+
 
     def play_mp3_file(self, stdscr, callsign, mp3_file, distance_to_flight_deck, speed, play_now=False):
         self.logger.warn(f"About to playing {mp3_file} for {callsign}")
@@ -130,19 +148,15 @@ class Radio:
             self.display_message(stdscr, f"Playing {mp3_file} for {callsign}")
         pygame.mixer.music.play()
 
-        self.logger.debug(f"OMG")
         # for each wled_command in config['audio_effects'][<mp3_file_name>], play each wled_command for the effect_duration
         for wled_command in self.config['audio_effects'][mp3_file]:
-            self.logger.debug(f"GETTING THE JOB DONE")
             self.send_command(wled_command['wled_command'])
             if wled_command['effect_duration'] == 0:
                 while pygame.mixer.music.get_busy():
-                    self.logger.debug("WORLD")
                     time.sleep(1)
             else:
                 time.sleep(wled_command['effect_duration'])
         while pygame.mixer.music.get_busy():
-            self.logger.debug("EUROPE")
             time.sleep(1)
 
         if stdscr:

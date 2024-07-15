@@ -353,25 +353,29 @@ class Tower:
         total_action_time = 1  # closest_aircraft.calculate_closest_distance() * 60
 
         if not closest_aircraft.has_triggered_audio:
-            self.logger.debug(f"Checking conditions for {closest_aircraft.callsign}")
             if closest_aircraft.is_in_trigger_radius() and closest_aircraft.is_speed_within_range() and closest_aircraft.is_altitude_within_range() and closest_aircraft.is_moving_towards_flight_deck():
-                if mp3_files and self.can_chatter():
-                    self.logger.debug(f"Playing MP3 for {closest_aircraft.callsign}")
-                    closest_aircraft.radio.play_mp3_file(stdscr, closest_aircraft.callsign, mp3_files[self.mp3_idx], closest_aircraft.distance_from_center_miles, closest_aircraft.speed)
-                    if self.mp3_idx < len(mp3_files)-1:
-                        self.mp3_idx += 1
+                if self.can_chatter():
+                    if mp3_files and self.can_chatter():
+                        self.logger.debug(f"Playing MP3 for {closest_aircraft.callsign}")
+                        closest_aircraft.radio.play_mp3_file(stdscr, closest_aircraft.callsign, mp3_files[self.mp3_idx], closest_aircraft.distance_from_center_miles, closest_aircraft.speed)
+                        if self.mp3_idx < len(mp3_files)-1:
+                            self.mp3_idx += 1
+                        else:
+                            self.mp3_idx = 0
+                        closest_aircraft.has_triggered_audio = time.time()  # Update flag after playing the audio
+                        self.last_chatter_time = time.time()  # Update last chatter time for use in chatter frequency calculations
+                        self.logger.info(f"Playing MP3 for aircraft: {closest_aircraft.callsign}")
                     else:
-                        self.mp3_idx = 0
-                    closest_aircraft.has_triggered_audio = time.time()  # Update flag after playing the audio
-                    self.last_chatter_time = time.time()  # Update last chatter time for use in chatter frequency calculations
-                    self.logger.info(f"Playing MP3 for aircraft: {closest_aircraft.callsign}")
-                else:
-                    if stdscr:
-                        self.display_message(stdscr, "No MP3 files to play.")
+                        if stdscr:
+                            self.display_message(stdscr, "No MP3 files to play.")
+                else: 
+                    if self.config['always_light_runway']:
+                        self.radio.light_runway(closest_aircraft.callsign, closest_aircraft.distance_from_center_miles, closest_aircraft.speed)
+                    self.display_message(stdscr, f"{self.format_time(self.can_chatter_when())} until chatter allowed.")
             else:
                 messages = []
                 if not self.can_chatter():
-                    self.logger.debug(f"{self.format_time(self.can_chatter_when())} until chatter allowed.")
+                    self.logger.warn(f"{self.format_time(self.can_chatter_when())} until chatter allowed.")
                     messages.append(f"{self.format_time(self.can_chatter_when())} until chatter allowed.")
                 if stdscr:
                     self.display_message(stdscr, "; ".join(messages))

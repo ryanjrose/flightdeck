@@ -371,6 +371,7 @@ class Tower:
                 else: 
                     if self.config['always_light_runway']:
                         self.radio.light_runway(closest_aircraft.callsign, closest_aircraft.distance_from_center_miles, closest_aircraft.speed)
+                        closest_aircraft.has_triggered_audio = time.time()  # Update flag after lighting runway
                     self.display_message(stdscr, f"{self.format_time(self.can_chatter_when())} until chatter allowed.")
             else:
                 messages = []

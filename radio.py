@@ -94,6 +94,10 @@ class Radio:
 
         light_start_time = time.time() + (eta - self.config['start_effects_early'])
         light_duration = self.config['start_effects_early'] + self.config['keep_runway_lit']
+        while time.time() < light_start_time:
+            remaining_time = round(light_start_time - time.time(), 2)
+            time.sleep(.2)
+
         self.logger.debug(f"{callsign} Lighting Runway for {light_duration} seconds.")
         effect_command = "{'ps': 2}"
         self.send_command(effect_command)

@@ -27,7 +27,7 @@ class Aircraft:
         self.radio = Radio(config, logger)  # Each aircraft has its own Radio instance
         self.has_triggered_audio = False  # Flag to track if audio has been triggered
 
-        self.logger.info(f"Initialized Aircraft: {self.callsign}")
+        #self.logger.info(f"Initialized Aircraft: {self.callsign}")
 
     def safe_int(self, value, default=0):
         try:

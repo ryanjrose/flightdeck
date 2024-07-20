@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Deck Configurator</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+<div class="background-image">
+    <div class="container">
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            <div class="form-group form-check">
+                {{ form.always_light_runway(class="form-check-input") }}
+                {{ form.always_light_runway.label(class="form-check-label") }}
+            </div>
+            <div class="form-group">
+                {{ form.chatter_per_hour.label(class="form-label") }}
+                {{ form.chatter_per_hour(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.flight_deck_latitude.label(class="form-label") }}
+                {{ form.flight_deck_latitude(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.flight_deck_longitude.label(class="form-label") }}
+                {{ form.flight_deck_longitude(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.aircraft_monitoring_radius.label(class="form-label") }}
+                {{ form.aircraft_monitoring_radius(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.aircraft_trigger_radius.label(class="form-label") }}
+                {{ form.aircraft_trigger_radius(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.aircraft_landing_runway.label(class="form-label") }}
+                {{ form.aircraft_landing_runway(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.aircraft_takeoff_runway.label(class="form-label") }}
+                {{ form.aircraft_takeoff_runway(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.allowed_heading_deviation.label(class="form-label") }}
+                {{ form.allowed_heading_deviation(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.min_altitude_feet.label(class="form-label") }}
+                {{ form.min_altitude_feet(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.max_altitude_feet.label(class="form-label") }}
+                {{ form.max_altitude_feet(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.min_speed_knots.label(class="form-label") }}
+                {{ form.min_speed_knots(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.max_speed_knots.label(class="form-label") }}
+                {{ form.max_speed_knots(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.start_effects_early.label(class="form-label") }}
+                {{ form.start_effects_early(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.keep_runway_lit.label(class="form-label") }}
+                {{ form.keep_runway_lit(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.audio_completion_offset.label(class="form-label") }}
+                {{ form.audio_completion_offset(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.min_landing_descent_rate.label(class="form-label") }}
+                {{ form.min_landing_descent_rate(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.min_takeoff_climb_rate.label(class="form-label") }}
+                {{ form.min_takeoff_climb_rate(class="form-control") }}
+            </div>
+            <div class="form-group form-check">
+                {{ form.ignore_helicopters(class="form-check-input") }}
+                {{ form.ignore_helicopters.label(class="form-check-label") }}
+            </div>
+            <div class="form-group form-check">
+                {{ form.ignore_light_aircraft(class="form-check-input") }}
+                {{ form.ignore_light_aircraft.label(class="form-check-label") }}
+            </div>
+            <div class="form-group form-check">
+                {{ form.ignore_small_aircraft(class="form-check-input") }}
+                {{ form.ignore_small_aircraft.label(class="form-check-label") }}
+            </div>
+            <div class="form-group form-check">
+                {{ form.ignore_large_aircraft(class="form-check-input") }}
+                {{ form.ignore_large_aircraft.label(class="form-check-label") }}
+            </div>
+            <div class="form-group form-check">
+                {{ form.ignore_heavy_aircraft(class="form-check-input") }}
+                {{ form.ignore_heavy_aircraft.label(class="form-check-label") }}
+            </div>
+            <div class="form-group form-check">
+                {{ form.ignore_high_performance_aircraft(class="form-check-input") }}
+                {{ form.ignore_high_performance_aircraft.label(class="form-check-label") }}
+            </div>
+            <button type="submit" class="btn btn-primary">Save Configuration</button>
+        </form>
+    </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

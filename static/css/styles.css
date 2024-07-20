@@ -1,0 +1,49 @@
+body, html {
+    height: 100%;
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.background-image {
+    /* The image used */
+    background-image: url('../images/fd.png');
+    background-size: 100vw 100vh;
+    background-repeat: no-repeat;
+    background-color: #000;
+
+}
+
+.container {
+    text-align: left;
+    color: white;
+    /* Text outline effect */
+    text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000,
+                 -2px 0 0 #000, 2px 0 0 #000, 0 -2px 0 #000, 0 2px 0 #000;
+}
+
+form {
+    padding-top: 200px;
+}
+
+h1 {
+    margin-top: 0;
+}
+
+.form-label {
+    color: white;
+    /* Text outline effect */
+    text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000,
+                 -2px 0 0 #000, 2px 0 0 #000, 0 -2px 0 #000, 0 2px 0 #000;
+}
+
+.form-check-label {
+    color: white;
+    /* Text outline effect */
+    text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000,
+                 -2px 0 0 #000, 2px 0 0 #000, 0 -2px 0 #000, 0 2px 0 #000;
+}
+
+form {
+    width: 50%
+    border: 1px solid blue;
+}

@@ -265,6 +265,17 @@ This document provides detailed instructions for setting up the Flight Deck moni
     SystemMaxUse=50M
     ```
 
+## Setup Ad-Hoc Config
+   ```bash
+   sudo apt-get install libcap2-bin
+   ```
+
+   ```bash
+      sudo setcap 'cap_net_bind_service=+ep' $(which python3)
+   ```
+   Note make sure setcap is pointing to the virtualenvironment python
+
+
 ---
 
 This README provides step-by-step instructions to set up the Flight Deck environment, ensuring a smooth installation and configuration process for monitoring and effects scripts on a Raspberry Pi running Debian Bullseye.

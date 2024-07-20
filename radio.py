@@ -61,7 +61,7 @@ class Radio:
         self.send_command('{"ps": 1}')
 
 
-    def play_button_b(self):
+    def play_button_b(self, idle_effect):
         self.logger.warn(f"Playing BUTTON B Special Effect")
         mp3_file = list(self.config.get('button_b_effect').keys())[0]
         try:
@@ -81,10 +81,10 @@ class Radio:
                 time.sleep(wled_command['effect_duration'])
 
         self.logger.warn('BUtton B Effect Over. Now going to idle mode')
-        effect_command = self.config.get('idle_effects')[1].get('wled_command') or "{'ps': 1}"
+        effect_command = idle_effect or self.config.get('idle_effects')[1].get('wled_command') or "{'ps': 1}"
         self.send_command(effect_command)
 
-    def light_runway(self, callsign, distance_to_flight_deck, speed):
+    def light_runway(self, callsign, distance_to_flight_deck, speed, idle_effect):
         # Calculate the ETA based on the distance and speed
         if speed >= self.config['min_speed_knots']:
             eta = distance_to_flight_deck / speed * 3600  # ETA in seconds
@@ -104,11 +104,11 @@ class Radio:
         while light_duration > 0:
             time.sleep(1)
             light_duration -= 1
-        effect_command = self.config.get('idle_effects')[1].get('wled_command') or "{'ps': 1}"
+        effect_command = idle_effect or self.config.get('idle_effects')[1].get('wled_command') or "{'ps': 1}"
         self.send_command(effect_command)
 
 
-    def play_mp3_file(self, stdscr, callsign, mp3_file, distance_to_flight_deck, speed, play_now=False):
+    def play_mp3_file(self, stdscr, callsign, mp3_file, distance_to_flight_deck, speed, idle_effect):
         self.logger.warn(f"About to playing {mp3_file} for {callsign}")
         try:
             mp3_path = os.path.join(self.config.get('mp3_folder'), mp3_file)
@@ -129,8 +129,7 @@ class Radio:
 
         # Calculate play_start_time so that the mp3 finishes when the aircraft is nearest to the flight deck
         play_start_time = time.time()
-        if not play_now:
-            play_start_time = time.time() + (eta - mp3_duration) - self.config['audio_completion_offset']
+        play_start_time = time.time() + (eta - mp3_duration) - self.config['audio_completion_offset']
 
         self.logger.debug(f"ETA: {eta} seconds")
         self.logger.debug(f"MP3 Duration: {mp3_duration} seconds")
@@ -139,14 +138,13 @@ class Radio:
         self.logger.debug(f"Current Time: {time.time()}")
 
 
-        if not play_now:
-            while time.time() < play_start_time:
-                remaining_time = round(play_start_time - time.time(), 2)
-                if stdscr:
-                    self.display_message(stdscr, f"{callsign} Waiting to play {mp3_file} in {remaining_time:.2f} seconds ...")
-                time.sleep(0.2)
+        while time.time() < play_start_time:
+            remaining_time = round(play_start_time - time.time(), 2)
+            if stdscr:
+                self.display_message(stdscr, f"{callsign} Waiting to play {mp3_file} in {remaining_time:.2f} seconds ...")
+            time.sleep(0.2)
 
-        if not play_now and play_start_time > time.time() + .25:
+        if play_start_time > time.time() + .25:
             return
         if stdscr:
             self.display_message(stdscr, f"Playing {mp3_file} for {callsign}")
@@ -167,7 +165,7 @@ class Radio:
             self.display_message(stdscr, f"Finished playing {mp3_file} for {callsign}")
         time.sleep(self.config['keep_runway_lit'])
         self.logger.debug('Turning on Idle Effects')
-        effect_command = self.config.get('idle_effects')[1].get('wled_command') or "{'ps': 1}"
+        effect_command = idle_effect or self.config.get('idle_effects')[1].get('wled_command') or "{'ps': 1}"
         self.send_command(effect_command)
 
     def display_message(self, stdscr, message):

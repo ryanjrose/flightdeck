@@ -25,6 +25,7 @@ class Tower:
         self.last_chatter_time = time.time()
         self.chatter_allowed = False
         self.idle_fx_idx = 0
+        self.idle_effect = '{"ps": 1}' # Candles
 
         # Initialize rpi_rf receiver
         self.rfdevice = RFDevice(17)  # GPIO pin 17
@@ -63,6 +64,7 @@ class Tower:
                             self.idle_fx_idx += 1
                         else:
                             self.idle_fx_idx = 0
+                        self.idle_effect = self.config['idle_effects'][self.idle_fx_idx]['wled_command']
                     elif code == self.config['RF_REMOTE_BTN_B']:
                         self.logger.warn(f"Button B pressed")
                         self.play_button_b_effect()
@@ -76,8 +78,7 @@ class Tower:
 
         try:
             self.logger.warn("Play MP3 For button B")
-            play_immediately = True
-            self.radio.play_button_b() 
+            self.radio.play_button_b(self.idle_effect) 
         except Exception as e:
             self.logger.warn(f"playing an mp3 file didnt work: {e}")
 
@@ -167,7 +168,6 @@ class Tower:
         for aircraft_data in aircraft_list:
             hex_id = aircraft_data.get("hex")
             if hex_id not in self.unique_aircraft:
-                self.logger.debug(f"New aircraft seen: {aircraft_data.get('flight')}")
                 self.unique_aircraft[hex_id] = Aircraft(self.config, aircraft_data, self.logger)
             else:
                 #self.logger.debug(f"Updating data for  {aircraft_data.get('flight')}")
@@ -250,7 +250,7 @@ class Tower:
                 try:
                     self.can_chatter()
                     nearby_aircraft = self.fetch_aircraft_data()
-                    self.logger.debug(f"={len(nearby_aircraft)} aircraft in {self.config['aircraft_monitoring_radius']} mi radius")
+                    #self.logger.debug(f"={len(nearby_aircraft)} aircraft in {self.config['aircraft_monitoring_radius']} mi radius")
 
                     if not nearby_aircraft:
                         time.sleep(0.1)
@@ -357,12 +357,12 @@ class Tower:
                 if self.can_chatter():
                     if mp3_files and self.can_chatter():
                         self.logger.debug(f"Playing MP3 for {closest_aircraft.callsign}")
-                        closest_aircraft.radio.play_mp3_file(stdscr, closest_aircraft.callsign, mp3_files[self.mp3_idx], closest_aircraft.distance_from_center_miles, closest_aircraft.speed)
+                        closest_aircraft.radio.play_mp3_file(stdscr, closest_aircraft.callsign, mp3_files[self.mp3_idx], closest_aircraft.distance_from_center_miles, closest_aircraft.speed, self.idle_effect)
+                        closest_aircraft.has_triggered_audio = time.time()  # Update flag after playing the audio
                         if self.mp3_idx < len(mp3_files)-1:
                             self.mp3_idx += 1
                         else:
                             self.mp3_idx = 0
-                        closest_aircraft.has_triggered_audio = time.time()  # Update flag after playing the audio
                         self.last_chatter_time = time.time()  # Update last chatter time for use in chatter frequency calculations
                         self.logger.info(f"Playing MP3 for aircraft: {closest_aircraft.callsign}")
                     else:
@@ -370,7 +370,7 @@ class Tower:
                             self.display_message(stdscr, "No MP3 files to play.")
                 else: 
                     if self.config['always_light_runway']:
-                        self.radio.light_runway(closest_aircraft.callsign, closest_aircraft.distance_from_center_miles, closest_aircraft.speed)
+                        self.radio.light_runway(closest_aircraft.callsign, closest_aircraft.distance_from_center_miles, closest_aircraft.speed, self.idle_effect)
                         closest_aircraft.has_triggered_audio = time.time()  # Update flag after lighting runway
                     self.display_message(stdscr, f"{self.format_time(self.can_chatter_when())} until chatter allowed.")
             else:
@@ -382,6 +382,7 @@ class Tower:
                     self.display_message(stdscr, "; ".join(messages))
 
     def display_message(self, stdscr, message):
-        stdscr.addstr(1, 0, message, curses.color_pair(1))
-        stdscr.refresh()
-        time.sleep(.2)
+        if stdscr:
+            stdscr.addstr(1, 0, message, curses.color_pair(1))
+            stdscr.refresh()
+            time.sleep(.2)

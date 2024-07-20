@@ -1,0 +1,169 @@
+#####¤º°`°º¤ø,¸¸-=[ The FLiGHT DeCK ]=-¸¸,ø¤º°`°º¤####
+#                    Configuration                   #
+######################################################
+tar1090_url: http://localhost/tar1090/data/aircraft.json
+mp3_folder: ./audio/chatter      # Where all the Tower/Pilot chatter mp3 files are stored
+chatter_per_hour: 1.33           # How many chatters per hour are you targeting
+always_light_runway: False       # If set to True, runway lights up everytime a plane passes, regardless of chatter_per_hour
+flight_deck_latitude: 32.7178    # Latitude for 1625 Grove St, San Diego, CA 92102
+flight_deck_longitude: -117.128  # Longitude for 1625 Grove St, San Diego, CA 92102
+aircraft_monitoring_radius: 8    # 8 miles radius around the specified location
+aircraft_trigger_radius: 5       # Trigger radius in miles
+aircraft_landing_runway: 28      # SAN DIEGO Runway 27
+aircraft_takeoff_runway: 10      # SAN DIEGO Runway 09
+allowed_heading_deviation: 10    # Number of +/- degrees to be off from runway heading
+min_altitude_feet: 500           # Minimum altitude of 500 feet above ground
+max_altitude_feet: 3550          # Maximum altitude of 1500 feet above ground (adjust as needed)
+min_speed_knots: 100             # Minimum speed of 75 knots
+max_speed_knots: 200             # Maximum speed of 290 knots
+start_effects_early: 10          # Starts lightning effects early and lets them sit before playing audio
+keep_runway_lit: 10              # How long to keep the runway patter lit after chatter stops
+audio_completion_offset: 15      # Number of seconds before the plane arrives to finish playing audio
+min_landing_descent_rate: -500   # Helps determine when a plane is landing because of a prolonged descent
+min_takeoff_climb_rate: 1500     # Helps determine when a plane is taking off because of prolonged ascent
+expire_old_planes: 120           # Number of seconds to wait before removing old planes from the view (dont change)
+RF_REMOTE_BTN_A: 8059905         # Unique code for RF remote button
+RF_REMOTE_BTN_B: 8059906         # Unique code for RF remote button
+ignore_helicopters: True        
+ignore_light_aircraft: True
+ignore_small_aircraft: False
+ignore_large_aircraft: False
+ignore_heavy_aircraft: True
+ignore_high_performance_aircraft: False
+debug: False
+#######################################################
+### Audio Effects
+#######################################################
+# If effect_duration = 0, effect will play for the duration of MP3
+#
+# Pre-Built WLED Effects are As Follow:
+# ID   |   EFFECT DESCRIPTION
+#  1   |   Candles
+#  2   |   Landing Strip Lights
+#  3   |   Breathing Lights (Blue)
+#  4   |   Alien Glitching
+#  5   |   Alien Landing
+#  6   |   Stormy Weather
+#  7   |   Solid Blue
+#  8   |   Red Rum
+#######################################################
+idle_effects:
+    - wled_command: '{"on": false, "transition": 0}'
+      effect_duration: 0
+    - wled_command: '{"ps": 1, "transition": 0}'
+      effect_duration: 0
+    - wled_command: '{"ps": 3, "transition": 0}'
+      effect_duration: 0
+    - wled_command: '{"ps": 4, "transition": 0}'
+      effect_duration: 0
+    - wled_command: '{"ps": 5, "transition": 0}'
+      effect_duration: 0
+    - wled_command: '{"ps": 6, "transition": 0}'
+      effect_duration: 0
+    - wled_command: '{"ps": 8, "transition": 0}'
+      effect_duration: 0
+    - wled_command: '{"ps": 7, "transition": 0}'
+      effect_duration: 0
+button_b_effect:
+  FlightDeckCocktail.mp3:
+    - wled_command: '{"ps": 2}'
+      effect_duration: 0 
+audio_effects:
+  1-suspicious.mp3:
+    - wled_command: '{"ps": 2}'
+      effect_duration: 0 
+  2-emergency.mp3:
+    - wled_command: '{"ps": 2}'
+      effect_duration: 0
+  3_rum_for_vics.mp3:
+    - wled_command: '{"ps": 2}'
+      effect_duration: 0
+  4-valley-girl.mp3:
+    - wled_command: '{"ps": 2}'
+      effect_duration: 0
+  5-tikicrew.mp3:
+    - wled_command: '{"ps": 2}'
+      effect_duration: 0
+  6_junglebird.mp3:
+    - wled_command: '{"ps": 2}'
+      effect_duration: 0
+  7_unknown_object_hovering.mp3:
+    - wled_command: '{"ps": 2}'
+      effect_duration: 0
+  8-snake_on_plane.mp3:
+    - wled_command: '{"ps": 2}'
+      effect_duration: 0
+  9_ufo.mp3:
+    - wled_command: '{"ps": 2}'
+      effect_duration: 12
+    - wled_command: '{"ps": 9}'
+      effect_duration: 12
+    - wled_command: '{"ps": 2}'
+      effect_duration: 10
+    - wled_command: '{"ps": 9}'
+      effect_duration: 19
+    - wled_command: '{"ps": 2}'
+      effect_duration: 10
+    - wled_command: '{"ps": 9}'
+      effect_duration: 18
+    - wled_command: '{"ps": 2}'
+      effect_duration: 0
+  10_freaky_space_cadet.mp3:
+   - wled_command: '{"ps": 2}'
+     effect_duration: 12
+   - wled_command: '{"ps": 9}'
+     effect_duration: 11.8
+   - wled_command: '{"ps": 2}'
+     effect_duration: 9.5 
+   - wled_command: '{"ps": 9}'
+     effect_duration: 13.5 
+   - wled_command: '{"ps": 2}'
+     effect_duration: 9
+   - wled_command: '{"ps": 4, "transition": 0}'
+     effect_duration: .5
+   - wled_command: '{"ps": 5, "transition": 0}'
+     effect_duration: .25
+   - wled_command: '{"ps": 3, "transition": 0}'
+     effect_duration: .5
+   - wled_command: '{"ps": 6, "transition": 0}'
+     effect_duration: .2
+   - wled_command: '{"ps": 9, "transition": 0}'
+     effect_duration: .2
+   - wled_command: '{"ps": 4, "transition": 0}'
+     effect_duration: .3
+   - wled_command: '{"ps": 8, "transition": 0}'
+     effect_duration: .25
+   - wled_command: '{"ps": 4, "transition": 0}'
+     effect_duration: .3
+   - wled_command: '{"ps": 6, "transition": 0}'
+     effect_duration: .2
+   - wled_command: '{"ps": 9, "transition": 0}'
+     effect_duration: .2
+   - wled_command: '{"ps": 4, "transition": 0}'
+     effect_duration: .1
+   - wled_command: '{"ps": 5, "transition": 0}'
+     effect_duration: .25
+   - wled_command: '{"ps": 3, "transition": 0}'
+     effect_duration: .2
+   - wled_command: '{"ps": 6, "transition": 0}'
+     effect_duration: .2
+   - wled_command: '{"ps": 3, "transition": 0}'
+     effect_duration: .5
+   - wled_command: '{"ps": 4, "transition": 0}'
+     effect_duration: .1
+   - wled_command: '{"ps": 8, "transition": 0}'
+     effect_duration: .25
+   - wled_command: '{"ps": 4, "transition": 0}'
+     effect_duration: .3
+   - wled_command: '{"ps": 6, "transition": 0}'
+     effect_duration: .4
+   - wled_command: '{"ps": 9, "transition": 0}'
+     effect_duration: .2
+   - wled_command: '{"ps": 2, "transition": 0}'
+     effect_duration: 0
+  11_v_for_victory.mp3:
+   - wled_command: '{"ps": 2}'
+     effect_duration: 0
+  12-resigned-indy.mp3:
+   - wled_command: '{"ps": 2}'
+     effect_duration: 0

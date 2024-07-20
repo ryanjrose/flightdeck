@@ -2,4 +2,7 @@ mutagen
 requests
 pygame
 pyyaml
-at requests
+ruamel.yaml
+flask
+flask-wtf
+requests

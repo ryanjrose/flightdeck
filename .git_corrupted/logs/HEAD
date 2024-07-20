@@ -1,0 +1,23 @@
+0000000000000000000000000000000000000000 ebbb877f62a704b308385630ccdc89563df474a4 rrose <rrose@flightdeck.(none)> 1720725341 -0700	clone: from https://github.com/ryanjrose/flightdeck
+ebbb877f62a704b308385630ccdc89563df474a4 3a7034f3b43b37f0405e928eb9dfb4b39ca560e9 Ryan Rose <ryanrose@gmail.com> 1720735126 -0700	commit: rebuilt stuff and moved to a new rpi image had to fix something that brok along the way
+3a7034f3b43b37f0405e928eb9dfb4b39ca560e9 274aa8e926a36ad619038f2b5bd81673474032f8 Ryan Rose <ryanrose@gmail.com> 1720747349 -0700	commit: RF Buttons working. One cycles idle effects, they other triggers an MP3 immediately.
+274aa8e926a36ad619038f2b5bd81673474032f8 bb2fe37cc837583a72c0220457a3c876f28cfbc0 Ryan Rose <ryanrose@gmail.com> 1720754705 -0700	commit: something not quite right with the aicraft class.
+bb2fe37cc837583a72c0220457a3c876f28cfbc0 916c35d6a8de5859d923d05f534f131239b4755a Ryan Rose <ryanrose@gmail.com> 1720762716 -0700	commit: About to test at the deck
+916c35d6a8de5859d923d05f534f131239b4755a 4688d6568330c85da2a3822626b816077a05de43 Ryan Rose <ryanrose@gmail.com> 1720762718 -0700	commit: foo
+4688d6568330c85da2a3822626b816077a05de43 f38abf4c92541e5fd3a5deb20b839ab8d295e459 Ryan Rose <ryanrose@gmail.com> 1720895987 -0700	commit: update
+f38abf4c92541e5fd3a5deb20b839ab8d295e459 9dee73e7bccb0e789a867f0903ea53c61f937602 Ryan Rose <ryanrose@gmail.com> 1720899605 -0700	commit: Added debug info to syslog
+9dee73e7bccb0e789a867f0903ea53c61f937602 f576b57c5ec005fa13eafaaf810d0440cc538a77 Ryan Rose <ryanrose@gmail.com> 1720903631 -0700	commit: Everything seems to be working!
+f576b57c5ec005fa13eafaaf810d0440cc538a77 b092ff1e76faa2c830f5afe8284df77fa8ca34e4 Ryan Rose <ryanrose@gmail.com> 1720920552 -0700	commit: trying to track down transient cpu usage goinmg to 100%
+b092ff1e76faa2c830f5afe8284df77fa8ca34e4 7999a1ce24be0a096a9f9af03a92114cc3e65e94 Ryan Rose <ryanrose@gmail.com> 1720978883 -0700	commit: Looks like we are stable, and this is RC1
+7999a1ce24be0a096a9f9af03a92114cc3e65e94 07f81502bb512cb714a7a8dc86db71bce2ee1911 Ryan Rose <ryanrose@gmail.com> 1720979450 -0700	commit: adding support file
+07f81502bb512cb714a7a8dc86db71bce2ee1911 302020968817bbfcc1abe43fe48492bc2356da03 Ryan Rose <ryanrose@gmail.com> 1720979457 -0700	commit: support files added
+302020968817bbfcc1abe43fe48492bc2356da03 ffc336735074d1d834e91de63df05c055ca33699 Ryan Rose <ryanrose@gmail.com> 1720980869 -0700	commit: README updated
+ffc336735074d1d834e91de63df05c055ca33699 a928237b5c585ef2f23422175423d87cd856b243 Ryan Rose <ryanrose@gmail.com> 1721012073 -0700	commit: Special mode for RF Remote Button B
+a928237b5c585ef2f23422175423d87cd856b243 6bc8e0165109e13917f06b0c2483e6e8d18e5b5f Ryan Rose <ryanrose@gmail.com> 1721018409 -0700	commit: Fixed MP3 shuffling; fixed logging when run as a service
+6bc8e0165109e13917f06b0c2483e6e8d18e5b5f edeee7f7595ac232bcb538d012af5d9b3a88aea7 Ryan Rose <ryanrose@gmail.com> 1721025413 -0700	commit: Added an option to keep lighting the runway lights
+edeee7f7595ac232bcb538d012af5d9b3a88aea7 94a0198aebd6143d3ccf17b168b0a85da28820fc Ryan Rose <ryanrose@gmail.com> 1721026398 -0700	commit: light_runway()
+94a0198aebd6143d3ccf17b168b0a85da28820fc dcf20322204ba3915e972e18818fb80536d62dff Ryan Rose <ryanrose@gmail.com> 1721266226 -0700	commit: minor tweaks
+dcf20322204ba3915e972e18818fb80536d62dff 9492592870daa1e3733b6cde7d1fbca75ff7ecec Ryan Rose <ryanrose@gmail.com> 1721266234 -0700	commit: small changes
+9492592870daa1e3733b6cde7d1fbca75ff7ecec f3043f59f11ae012ffa18d414f94f9d48aa4c8bb Ryan Rose <ryanrose@gmail.com> 1721502740 -0700	commit: Lots of changes - updated self config
+f3043f59f11ae012ffa18d414f94f9d48aa4c8bb dec6828d58a35a894967a96b30012f5b0c68006e Ryan Rose <ryanrose@gmail.com> 1721506748 -0700	commit: Lights correctly stay in Idle mode after a chatter has been triggered
+dec6828d58a35a894967a96b30012f5b0c68006e eb371ed0b7d6193d217e333d1db15fd8483622f8 Ryan Rose <ryanrose@gmail.com> 1721506794 -0700	commit: removed some debug messages

@@ -24,7 +24,7 @@ class Tower:
         self.unchecked_box = ' ' #'\u2B1B'
         self.last_chatter_time = time.time()
         self.chatter_allowed = False
-        self.idle_fx_idx = 0
+        self.idle_fx_idx = 1
         self.idle_effect = '{"ps": 1}' # Candles
 
         # Initialize rpi_rf receiver
@@ -64,7 +64,8 @@ class Tower:
                             self.idle_fx_idx += 1
                         else:
                             self.idle_fx_idx = 0
-                        self.idle_effect = self.config['idle_effects'][self.idle_fx_idx]['wled_command']
+                        self.idle_effect = self.config['idle_effects'][self.idle_fx_idx - 1]['wled_command']
+                        self.logger.warn(f"IDLE EFFECT SET TO: {self.idle_effect}")
                     elif code == self.config['RF_REMOTE_BTN_B']:
                         self.logger.warn(f"Button B pressed")
                         self.play_button_b_effect()
@@ -345,6 +346,8 @@ class Tower:
                 self.aircraft_debug += f"{'x' if aircraft.is_altitude_within_range() else '-':^10} "
                 self.aircraft_debug += f"{'x' if aircraft.is_moving_towards_flight_deck() else '-':^10}"
         self.logger.debug(self.aircraft_debug + "\n" + "-" * 103)
+        self.logger.warn(f"IDLE FX: {self.idle_fx_idx} - {self.idle_effect}")
+        self.logger.warn(f"IDLE EFFECT SET TO: {self.idle_effect}")
 
 
 

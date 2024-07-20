@@ -33,34 +33,6 @@ class Radio:
             with serial.Serial(esp_port, 115200, timeout=1) as ser:
                 ser.write(command.encode())
 
-    def _play_button_b(self):
-        self.logger.warn(f"Playing BUTTON B Special Effect")
-        
-        mp3_file = list(self.config.get('button_b_effect').keys())[0]
-        try:
-            mp3_path = os.path.join(self.config.get('mp3_folder'), mp3_file)
-            pygame.mixer.music.load(mp3_path)
-        except pygame.error as e:
-            self.logger.error(f"Error loading {mp3_file}: {e}")
-            return
-        
-        pygame.mixer.music.play()
-        self.logger.info(f"Started playing {mp3_file}")
-
-        for wled_command in self.config['button_b_effect'][mp3_file]:
-            self.send_command(wled_command['wled_command'])
-            self.logger.info(f"Sent command: {wled_command['wled_command']}")
-            
-            if wled_command['effect_duration'] == 0:
-                self.logger.info("Waiting for music to finish playing...")
-                while pygame.mixer.music.get_busy():
-                    time.sleep(1)
-            else:
-                self.logger.info(f"Sleeping for {wled_command['effect_duration']} seconds")
-                time.sleep(wled_command['effect_duration'])
-        self.send_command('{"ps": 1}')
-
-
     def play_button_b(self, idle_effect):
         self.logger.warn(f"Playing BUTTON B Special Effect")
         mp3_file = list(self.config.get('button_b_effect').keys())[0]
@@ -165,8 +137,9 @@ class Radio:
             self.display_message(stdscr, f"Finished playing {mp3_file} for {callsign}")
         time.sleep(self.config['keep_runway_lit'])
         self.logger.debug('Turning on Idle Effects')
-        effect_command = idle_effect or self.config.get('idle_effects')[1].get('wled_command') or "{'ps': 1}"
-        self.send_command(effect_command)
+        effect_command = idle_effect or "{'ps': 1}"
+        self.send_command(str(effect_command))
+        self.logger.warn(f"idle Effect: {idle_effect} | effect_command: {effect_command}")
 
     def display_message(self, stdscr, message):
         if not stdscr:

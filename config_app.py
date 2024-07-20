@@ -2,6 +2,7 @@ from flask import Flask, render_template, redirect, url_for, flash
 from ruamel.yaml import YAML
 from forms import ConfigForm
 import os
+import subprocess
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
@@ -17,6 +18,13 @@ def load_config():
 def save_config(data):
     with open(config_file_path, 'w') as file:
         yaml.dump(data, file)
+
+def restart_flightdeck_service():
+    try:
+        subprocess.run(["/usr/bin/sudo", "/usr/bin/systemctl", "restart", "flightdeck"], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error restarting FlightDeck service: {e}")
+        flash('Failed to restart FlightDeck service', 'error')
 
 @app.route('/settings', methods=['GET', 'POST'])
 def settings():
@@ -51,6 +59,7 @@ def settings():
 
         save_config(config_data)
         flash('Configuration updated successfully!', 'success')
+        restart_flightdeck_service()
         return redirect(url_for('settings'))
 
     form.chatter_per_hour.data = config_data['chatter_per_hour']

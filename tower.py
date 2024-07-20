@@ -346,9 +346,6 @@ class Tower:
                 self.aircraft_debug += f"{'x' if aircraft.is_altitude_within_range() else '-':^10} "
                 self.aircraft_debug += f"{'x' if aircraft.is_moving_towards_flight_deck() else '-':^10}"
         self.logger.debug(self.aircraft_debug + "\n" + "-" * 103)
-        self.logger.warn(f"IDLE FX: {self.idle_fx_idx} - {self.idle_effect}")
-        self.logger.warn(f"IDLE EFFECT SET TO: {self.idle_effect}")
-
 
 
     def process_closest_aircraft(self, stdscr, nearby_aircraft, mp3_files):

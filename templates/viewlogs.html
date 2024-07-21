@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FlightDeck Data Stream</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #log {
+            max-height: 80vh;
+            overflow-y: scroll;
+            background-color: #f0f0f0;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        .log-entry {
+            margin: 0;
+            padding: 2px 0;
+            color: #fff;
+        }
+    </style>
+    <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", function() {
+            var eventSource = new EventSource("/streamlogs");
+            var buffer = "";
+
+            eventSource.onmessage = function(event) {
+                var line = event.data;
+                var logDiv = document.getElementById("log");
+
+                // Check if the line starts with a timestamp
+                //if (line.match(/^[A-Za-z]{3} \d{2} \d{2}:\d{2}:\d{2}/)) {
+                // Check for Header
+                if (line.match(/^Callsign/)) {
+                    // If buffer is not empty, replace the content of the log div
+                    if (buffer !== "") {
+                        logDiv.innerHTML = `<pre class="log-entry">${buffer}</pre>`;
+                        logDiv.scrollTop = logDiv.scrollHeight; // Scroll to the bottom
+                        buffer = "";
+                    }
+                }
+                // Add the current line to the buffer
+                if (!(line.match(/^DEBUG/))) {
+                    buffer += line + "\n";
+                }
+            };
+
+            eventSource.onerror = function(event) {
+                console.error("EventSource failed:", event);
+            };
+        });
+    </script>
+</head>
+<body style="background-color: #000">
+    <div class="background-image" style="height: 450px;">
+        <div class="container" style="position: absolute; padding-bottom: 150px;"></div>
+            <div id="log" style="position: relative; top: 120px;  background-color: rgba(0,0,0, 0.7);"></div>
+        </div>
+    </div>
+</body>
+</html>

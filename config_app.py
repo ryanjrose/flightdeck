@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, flash
+from flask import Flask, render_template, redirect, url_for, flash, Response
 from ruamel.yaml import YAML
 from forms import ConfigForm
 import os
@@ -25,6 +25,24 @@ def restart_flightdeck_service():
     except subprocess.CalledProcessError as e:
         print(f"Error restarting FlightDeck service: {e}")
         flash('Failed to restart FlightDeck service', 'error')
+
+@app.route('/streamlogs')
+def streamlogs():
+    def generate():
+        process = subprocess.Popen(['/usr/bin/sudo', '/usr/bin/journalctl', '-f', '-n', '0', '-o', 'cat'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        while True:
+            line = process.stdout.readline()
+            if line:
+                yield f'data: {line.decode("utf-8")}\n\n'
+            else:
+                yield 'event: end\n\n'
+                break
+
+    return Response(generate(), mimetype='text/event-stream')
+
+@app.route('/viewlogs')
+def viewlogs():
+    return render_template('viewlogs.html')
 
 @app.route('/settings', methods=['GET', 'POST'])
 def settings():
@@ -95,4 +113,4 @@ def index():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=80)
+    app.run(host='0.0.0.0', port=80, debug=True)

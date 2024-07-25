@@ -76,6 +76,14 @@ class WLED:
 
 if __name__ == '__main__':
     w = WLED()
-    #w.query_ip_address()
-    if sys.argv[1]:
-        w.send_command(sys.argv[1])
+    cmd1 = '{"on":true,"bri":255,"transition":0,"mainseg":0,"seg":[{"id":1,"start":0,"stop":20,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":255,"col":[[0,0,0]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false},{"id":2,"start":0,"stop":5,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":255,"col":[[255,255,255]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false},{"id":3,"start":10,"stop":15,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":255,"col":[[255,255,255]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false}]}'
+    cmd2 = '{"on":true,"bri":255,"transition":0,"mainseg":0,"seg":[{"id":0,"start":0,"stop":20,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":255,"col":[[0,0,0]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false},{"id":1,"start":5,"stop":10,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":255,"col":[[255,255,255]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false},{"id":2,"start":15,"stop":20,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":255,"col":[[255,255,255]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false}]}'
+
+    cmd = cmd1
+    for i in range(10):
+        if cmd == cmd1:
+            cmd = cmd2
+        else:
+            cmd = cmd1
+        w.send_command(cmd)
+        time.sleep(.025)

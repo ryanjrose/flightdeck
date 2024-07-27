@@ -3,7 +3,7 @@
 ######################################################
 tar1090_url: http://localhost:8080/tar1090/data/aircraft.json
 mp3_folder: ./audio/chatter      # Where all the Tower/Pilot chatter mp3 files are stored
-chatter_per_hour: 1              # How many chatters per hour are you targeting
+chatter_per_hour: 1.33           # How many chatters per hour are you targeting
 always_light_runway: false       # If set to True, runway lights up everytime a plane passes, regardless of chatter_per_hour
 flight_deck_latitude: 32.7178    # Latitude for 1625 Grove St, San Diego, CA 92102
 flight_deck_longitude: -117.128  # Longitude for 1625 Grove St, San Diego, CA 92102
@@ -66,11 +66,11 @@ idle_effects:
   effect_duration: 0
 button_b_effect:
   FlightDeckCocktail.mp3:
-    # Initial delay before starting the yellow buildup
+    # 0.00s - 0.60s Initial delay before starting the yellow buildup
     - wled_command: '{"on":true,"bri":0,"transition":0,"mainseg":0,"seg":[{"id":0,"start":0,"stop":20,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"col":[[0,0,0]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false}]}'
       effect_duration: 0.6
 
-    # Yellow buildup effects starting at 0.6 seconds and stopping at 1.9 seconds
+    # 0.60s - 2.20s Yellow buildup effects starting at 0.6 seconds and stopping at 2.2 seconds
     - wled_command: '{"on":true,"bri":20,"transition":0,"mainseg":0,"seg":[{"id":0,"start":0,"stop":20,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"col":[[255,255,0]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false}]}'
       effect_duration: 0.3
     - wled_command: '{"on":true,"bri":50,"transition":0,"mainseg":0,"seg":[{"id":0,"start":0,"stop":20,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"col":[[255,255,0]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false}]}'
@@ -84,11 +84,11 @@ button_b_effect:
     - wled_command: '{"on":true,"bri":255,"transition":0,"mainseg":0,"seg":[{"id":0,"start":0,"stop":20,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"col":[[255,255,0]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false}]}'
       effect_duration: 0.1
 
-    # All lights off from 1.9 seconds to 2.6 seconds
+    # 1.90s - 2.60s All lights off from 1.9 seconds to 2.6 seconds
     - wled_command: '{"on":false,"transition":0}'
       effect_duration: 0.7
 
-    # White light effects for popping noises starting at 2.6 seconds
+    # 2.60s - 4.60s White light effects for popping noises starting at 2.6 seconds
     - wled_command: '{"on":true,"bri":255,"transition":0,"mainseg":0,"seg":[{"id":0,"start":0,"stop":5,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":255,"col":[[255,255,255]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false},{"id":1,"start":5,"stop":20,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":0,"col":[[0,0,0]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false}]}'
       effect_duration: 0.1
     - wled_command: '{"on":false,"transition":0}'
@@ -98,7 +98,7 @@ button_b_effect:
     - wled_command: '{"on":false,"transition":0}'
       effect_duration: 0.4
     - wled_command: '{"on":true,"bri":255,"transition":0,"mainseg":0,"seg":[{"id":0,"start":0,"stop":5,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":0,"col":[[0,0,0]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false},{"id":1,"start":5,"stop":10,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":255,"col":[[255,255,255]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false},{"id":2,"start":10,"stop":20,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":0,"col":[[0,0,0]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false}]}'
-      effect_duration: 0.1
+      effect_duration: 0.05
     - wled_command: '{"on":false,"transition":0}'
       effect_duration: 0.2
     - wled_command: '{"on":true,"bri":255,"transition":0,"mainseg":0,"seg":[{"id":0,"start":0,"stop":10,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":0,"col":[[0,0,0]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false},{"id":1,"start":10,"stop":15,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":255,"col":[[255,255,255]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false},{"id":2,"start":15,"stop":20,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":0,"col":[[0,0,0]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false}]}'
@@ -106,21 +106,44 @@ button_b_effect:
     - wled_command: '{"on":false,"transition":0}'
       effect_duration: 0.1
     - wled_command: '{"on":true,"bri":255,"transition":0,"mainseg":0,"seg":[{"id":0,"start":0,"stop":5,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":255,"col":[[255,255,255]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false},{"id":1,"start":5,"stop":20,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":0,"col":[[0,0,0]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false}]}'
-      effect_duration: 0.1
-    - wled_command: '{"on":false,"transition":0}'
-      effect_duration: 0.1
-      # Remove/Change this one
-    - wled_command: '{"on":true,"bri":255,"transition":0,"mainseg":0,"seg":[{"id":0,"start":0,"stop":15,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":0,"col":[[0,0,0]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false},{"id":1,"start":15,"stop":20,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":255,"col":[[255,255,255]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false}]}'
-      effect_duration: 0.1
-    - wled_command: '{"on":false,"transition":0}'
-      effect_duration: 0.1
-      # Remove/Change this one
-    - wled_command: '{"on":true,"bri":255,"transition":0,"mainseg":0,"seg":[{"id":0,"start":0,"stop":5,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":255,"col":[[255,255,255]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false},{"id":1,"start":5,"stop":20,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":0,"col":[[0,0,0]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false}]}'
-      effect_duration: 0.1
-    - wled_command: '{"on":false,"transition":0}'
-      effect_duration: 0.1
-    - wled_command: '{"on":true,"bri":255,"transition":0.5,"mainseg":0}'
-      effect_duration: 0.5
+      effect_duration: 0.05
+    - wled_command: '{"on":true,"bri":0,"transition":0}'
+      effect_duration: 0.15
+
+    # 4.60s - 12.70s White light effects for popping noises starting at 2.6 seconds
+    - wled_command: '{"on":true,"bri":1,"transition":0,"mainseg":0,"seg":[{"id":0,"start":0,"stop":20,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":1,"cct":127,"set":0,"n":"","col":[[72,69,12],[191,182,13],[0,0,255]],"fx":115,"sx":255,"ix":127,"pal":9,"c1":128,"c2":128,"c3":16,"sel":true,"rev":false,"mi":false,"o1":false,"o2":false,"o3":false,"si":0,"m12":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0}]}'
+      effect_duration: .1
+    - wled_command: '{"on":true,"bri":255,"transition":80,"mainseg":0,"seg":[{"id":0,"start":0,"stop":20,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":255,"cct":127,"set":0,"n":"","col":[[72,69,12],[191,182,13],[0,0,255]],"fx":115,"sx":255,"ix":127,"pal":9,"c1":128,"c2":128,"c3":16,"sel":true,"rev":false,"mi":false,"o1":false,"o2":false,"o3":false,"si":0,"m12":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0}]}'
+      effect_duration: 8
+
+    # 12.70s - 15.00s FLIIIIIGGGHTTT DEEEEEEECCK!!!!
+    - wled_command: '{"on":true,"bri":255,"transition":0,"mainseg":0,"seg":[{"id":0,"start":0,"stop":20,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":255,"cct":127,"set":0,"n":"","col":[[255,255,255],[5,152,0],[4,120,0]],"fx":112,"sx":128,"ix":128,"pal":35,"c1":128,"c2":128,"c3":16,"sel":true,"rev":false,"mi":false,"o1":false,"o2":false,"o3":false,"si":0,"m12":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0}]}'
+      effect_duration: 2.3 
+
+    # 15.00s - 21.00s 1st Set of Planes fly away
+    - wled_command: '{"on":true,"bri":50,"transition":10,"mainseg":0,"seg":[{"id":0,"start":0,"stop":20,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":255,"cct":127,"set":0,"n":"","col":[[72,69,12],[191,182,13],[0,0,255]],"fx":115,"sx":255,"ix":127,"pal":26,"c1":128,"c2":128,"c3":16,"sel":true,"rev":false,"mi":false,"o1":false,"o2":false,"o3":false,"si":0,"m12":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0}]}'
+      effect_duration: 6
+
+    #21.00s - 25.50s 2nd set planes Build up!
+    - wled_command: '{"on":true,"bri":155,"transition":40,"mainseg":0,"seg":[{"id":0,"start":0,"stop":20,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":255,"cct":127,"set":0,"n":"","col":[[72,69,12],[191,182,13],[0,0,255]],"fx":115,"sx":255,"ix":127,"pal":9,"c1":128,"c2":128,"c3":16,"sel":true,"rev":false,"mi":false,"o1":false,"o2":false,"o3":false,"si":0,"m12":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0}]}'
+      effect_duration: 4
+
+    #26.00s - 27.50s 2nd plane screams by...
+    - wled_command: '{"on":true,"bri":255,"transition":0,"mainseg":0,"seg":[{"id":0,"start":0,"stop":20,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":255,"cct":127,"set":0,"n":"","col":[[72,69,12],[191,182,13],[0,0,255]],"fx":76,"sx":255,"ix":0,"pal":13,"c1":128,"c2":128,"c3":16,"sel":false,"rev":false,"mi":false,"o1":false,"o2":false,"o3":false,"si":0,"m12":0},{"id":1,"start":0,"stop":10,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":255,"cct":127,"set":0,"n":"","col":[[0,0,0],[0,0,255],[255,255,255]],"fx":76,"sx":255,"ix":0,"pal":13,"c1":128,"c2":128,"c3":16,"sel":true,"rev":false,"mi":false,"o1":false,"o2":false,"o3":false,"si":0,"m12":0},{"id":2,"start":10,"stop":20,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":255,"cct":127,"set":0,"n":"","col":[[0,0,0],[0,0,255],[255,255,255]],"fx":76,"sx":255,"ix":0,"pal":13,"c1":128,"c2":128,"c3":16,"sel":true,"rev":true,"mi":false,"o1":false,"o2":false,"o3":false,"si":0,"m12":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0}]}'
+      effect_duration: 1.3
+    - wled_command: '{"on":true,"bri":255,"transition":0,"mainseg":0,"seg":[{"id":0,"start":0,"stop":20,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":255,"cct":127,"set":0,"n":"","col":[[72,69,12],[191,182,13],[0,0,255]],"fx":76,"sx":255,"ix":0,"pal":13,"c1":128,"c2":128,"c3":16,"sel":false,"rev":false,"mi":false,"o1":false,"o2":false,"o3":false,"si":0,"m12":0},{"id":1,"start":0,"stop":10,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":255,"cct":127,"set":0,"n":"","col":[[0,0,0],[0,0,255],[255,255,255]],"fx":76,"sx":255,"ix":0,"pal":13,"c1":128,"c2":128,"c3":16,"sel":true,"rev":true,"mi":false,"o1":false,"o2":false,"o3":false,"si":0,"m12":0},{"id":2,"start":10,"stop":20,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":255,"cct":127,"set":0,"n":"","col":[[0,0,0],[0,0,255],[255,255,255]],"fx":76,"sx":255,"ix":0,"pal":13,"c1":128,"c2":128,"c3":16,"sel":true,"rev":false,"mi":false,"o1":false,"o2":false,"o3":false,"si":0,"m12":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0}]}'
+      effect_duration: 1.3
+
+    #27.5 - 50.50s - Plane gets increasingly distant
+    - wled_command: '{"on":true,"bri":10,"transition":220,"mainseg":0,"seg":[{"id":0,"start":0,"stop":20,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":255,"cct":127,"set":0,"n":"","col":[[72,69,12],[191,182,13],[0,0,255]],"fx":101,"sx":128,"ix":128,"pal":51,"c1":128,"c2":128,"c3":16,"sel":true,"rev":false,"mi":false,"o1":false,"o2":false,"o3":false,"si":0,"m12":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0}]}'
+      effect_duration: 23.5
+
+    # 51.00s - 56.00s - Big End Fade
+    - wled_command: '{"on":true,"bri":255,"transition":0,"mainseg":0,"seg":[{"id":0,"start":0,"stop":20,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":255,"cct":127,"set":0,"col":[[255,255,255],[0,0,0],[0,0,255]],"fx":0,"sx":128,"ix":128,"pal":23,"c1":128,"c2":128,"c3":16,"sel":true,"rev":false,"mi":false,"o1":false,"o2":false,"o3":false,"si":0,"m12":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0},{"stop":0}]}'
+      effect_duration: .01
+    - wled_command: '{"on":false,"bri":0, "transition":49}'
+      effect_duration: 14.99 
+
 audio_effects:
   1-suspicious.mp3:
   - wled_command: '{"ps": 2}'

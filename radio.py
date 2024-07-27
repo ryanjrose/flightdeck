@@ -48,7 +48,7 @@ class Radio:
             self.send_command(wled_command['wled_command'])
             if wled_command['effect_duration'] == 0:
                 while pygame.mixer.music.get_busy():
-                    time.sleep(1)
+                    time.sleep(.1)
             else:
                 time.sleep(wled_command['effect_duration'])
 

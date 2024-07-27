@@ -109,10 +109,12 @@ button_b_effect:
       effect_duration: 0.1
     - wled_command: '{"on":false,"transition":0}'
       effect_duration: 0.1
+      # Remove/Change this one
     - wled_command: '{"on":true,"bri":255,"transition":0,"mainseg":0,"seg":[{"id":0,"start":0,"stop":15,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":0,"col":[[0,0,0]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false},{"id":1,"start":15,"stop":20,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":255,"col":[[255,255,255]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false}]}'
       effect_duration: 0.1
     - wled_command: '{"on":false,"transition":0}'
       effect_duration: 0.1
+      # Remove/Change this one
     - wled_command: '{"on":true,"bri":255,"transition":0,"mainseg":0,"seg":[{"id":0,"start":0,"stop":5,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":255,"col":[[255,255,255]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false},{"id":1,"start":5,"stop":20,"grp":1,"spc":0,"of":0,"on":true,"frz":false,"bri":0,"col":[[0,0,0]],"fx":0,"sx":255,"ix":0,"pal":0,"sel":true,"rev":false}]}'
       effect_duration: 0.1
     - wled_command: '{"on":false,"transition":0}'
